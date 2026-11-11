@@ -34,7 +34,7 @@ import java.util.Locale;
 public final class RadarPreviewActivity extends Activity {
     private final int BG=0xff071624,CARD=0xff122c42,WHITE=0xfff3faff,PALE=0xffa9cce5,BLUE=0xff63d3f6;
     private AppPrefs prefs;private LinearLayout body;private TextView heading,detail,observation,trust,frameTime;
-    private ImageView radar;private WebView official;private int frame=0;private boolean playing;
+    private ImageView radar;private LinearLayout timeline;private WebView official;private int frame=0;private boolean playing;
     private final Handler handler=new Handler(Looper.getMainLooper());
     private final Runnable animation=new Runnable(){@Override public void run(){
         if(!playing)return;frame=(frame+1)%2;showFrame();handler.postDelayed(this,1100);
@@ -66,9 +66,16 @@ public final class RadarPreviewActivity extends Activity {
         map.addView(center,new FrameLayout.LayoutParams(dp(38),dp(38),Gravity.CENTER));
         frameTime=text("Radar timestamp unavailable",12,BLUE,true);item(body,frameTime,9);
         item(body,text("Radar imagery: RainViewer · past frames only. Local point is at the center. Blank tiles may mean no coverage, not no rain.",11,PALE,false),4);
+        item(body,text("0–120 MINUTES · ESTIMATED RADAR ECHO",12,BLUE,true),12);
+        timeline=new LinearLayout(this);timeline.setOrientation(LinearLayout.HORIZONTAL);item(body,timeline,6);
+        LinearLayout timelineLabels=new LinearLayout(this);timelineLabels.setOrientation(LinearLayout.HORIZONTAL);
+        TextView zero=text("Now",11,PALE,false),end=text("120 min",11,PALE,false);
+        timelineLabels.addView(zero,new LinearLayout.LayoutParams(0,-2,1));
+        end.setGravity(Gravity.RIGHT);timelineLabels.addView(end,new LinearLayout.LayoutParams(0,-2,1));
+        item(body,timelineLabels,3);
         item(body,button("↻ Check radar & observations",this::refresh),12);
         item(body,button("PMD official radar · in-app preview",this::showOfficial),8);
-        item(body,button("Open PMD radar in browser ↗",()->open("https://ffd.pmd.gov.pk/radar?site=islamabad")),7);
+        item(body,button("Open PMD radar in browser ↗",()->open(pmdUrl())),7);
         item(body,button("RainViewer source ↗",()->open("https://www.rainviewer.com/")),7);
         item(body,button("NOAA observation source ↗",()->open("https://aviationweather.gov/data/api/")),7);
         item(body,text("RainViewer imagery is for personal / educational use with attribution. PMD frames may be stale. Airport reports may not reflect conditions at your address.",11,PALE,false),12);
@@ -84,8 +91,22 @@ public final class RadarPreviewActivity extends Activity {
             observation.setText(n.observation);trust.setText("Evidence: "+n.evidence+"\n"+n.radarState+"\n"+n.verification);
             if(!n.current(System.currentTimeMillis()))heading.setText("Earlier outlook · "+n.headline);
         }
+        renderTimeline(n);
         showFrame();
     }
+    private void renderTimeline(RainNowcast n){
+        timeline.removeAllViews();
+        long now=System.currentTimeMillis();boolean valid=n!=null&&n.validRadar(now)&&n.current(now)&&n.radarMoving;
+        for(int i=0;i<13;i++){
+            int value=valid?n.bins[i]:-1;
+            int color=value<0?0xff374556:value==0?0xff24495c:value==1?0xff2f8dc4:
+                 value==2?0xff52c2e4:value==3?0xffefa748:0xffe75868;
+            View v=new View(this);v.setBackground(background(color,4));
+            LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,dp(13),1);p.setMargins(dp(1),0,dp(1),0);
+            timeline.addView(v,p);
+        }
+    }
+    private String pmdUrl(){return "https://ffd.pmd.gov.pk/radar?site="+(prefs.hasLocation()&&prefs.lat()<29?"karachi":"islamabad");}
     private void showFrame(){
         if(!prefs.hasLocation()||!RadarNowcastClient.locationKey(prefs.lat(),prefs.lon()).equals(prefs.get("radar_preview_location",""))){
             radar.setImageDrawable(null);frameTime.setText("No radar preview for this location");return;
@@ -117,6 +138,9 @@ public final class RadarPreviewActivity extends Activity {
             official.getSettings().setJavaScriptEnabled(true);official.getSettings().setAllowFileAccess(false);
             official.getSettings().setDomStorageEnabled(false);
             official.setWebViewClient(new WebViewClient(){
+                @Override public void onReceivedError(WebView v,WebResourceRequest request,android.webkit.WebResourceError error){
+                    if(request.isForMainFrame())Toast.makeText(RadarPreviewActivity.this,"PMD preview unavailable · use browser link",Toast.LENGTH_LONG).show();
+                }
                 @Override public boolean shouldOverrideUrlLoading(WebView v,WebResourceRequest r){
                     Uri u=r.getUrl();String host=u.getHost();
                     if("https".equals(u.getScheme())&&(host!=null)&&(host.equals("ffd.pmd.gov.pk")||host.equals("ffd.gov.pk")||host.equals("radar.weather.gov.pk")))return false;
@@ -126,7 +150,7 @@ public final class RadarPreviewActivity extends Activity {
             LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,dp(440));p.topMargin=dp(10);body.addView(official,p);
         }
         official.setVisibility(View.VISIBLE);
-        official.loadUrl("https://ffd.pmd.gov.pk/radar?site=islamabad");
+        official.loadUrl(pmdUrl());
         Toast.makeText(this,"Official PMD page · check the frame timestamp",Toast.LENGTH_LONG).show();
     }
     @Override protected void onPause(){super.onPause();playing=false;handler.removeCallbacks(animation);if(official!=null)official.onPause();}

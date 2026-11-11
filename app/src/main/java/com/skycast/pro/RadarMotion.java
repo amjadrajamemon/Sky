@@ -16,6 +16,11 @@ public final class RadarMotion {
         Motion result=new Motion();result.frameMinutes=frameMinutes;
         if(!square(previous)||!square(current)||previous.length!=current.length||frameMinutes<3||frameMinutes>30)return result;
         int n=current.length;int count=0,prior=0;
+        // Current center echo is an observation even when velocity cannot be estimated.
+        int center=n/2,observed=0;
+        for(int yy=center-1;yy<=center+1;yy++)for(int xx=center-1;xx<=center+1;xx++)
+            observed=Math.max(observed,current[yy][xx]);
+        result.steps[0]=observed;
         for(int y=0;y<n;y++)for(int x=0;x<n;x++){if(current[y][x]>0)count++;if(previous[y][x]>0)prior++;}
         result.hasEcho=count>0;
         if(count<5||prior<5)return result; // no fabricated velocity from blank/sparse imagery

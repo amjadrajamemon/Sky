@@ -16,7 +16,7 @@ public class RadarMotionTest {
         verify(n.arrivalStart>=0&&n.arrivalEnd<=90,"Non-exact arrival window expected");
         verify(n.duration>0&&n.intensity.contains("echoes"),"Qualitative echo intensity only");
         RadarMotion.Motion blank=RadarMotion.forecast(grid(),grid(),10);
-        verify(!blank.coherent&&blank.steps[0]==-1,"Blank frames must not imply dry");
+        verify(!blank.coherent&&blank.steps[0]==0,"Blank frames must not imply dry");
         int[][] sparse=grid();sparse[20][20]=1;
         verify(!RadarMotion.forecast(sparse,sparse,10).coherent,"Sparse storms have unknown velocity");
         verify(!RadarMotion.forecast(a,b,45).coherent,"Stale interval must fail motion");

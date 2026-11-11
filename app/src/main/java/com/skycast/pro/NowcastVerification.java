@@ -19,7 +19,7 @@ public final class NowcastVerification {
                 JSONObject r=records.optJSONObject(i);if(r==null)continue;
                 long target=r.optLong("time");
                 // only verify if target time aligns within one radar-frame interval.
-                if(Math.abs(target-radarFrameTime)<=8*60_000L){
+                if(Math.abs(target-radarFrameTime)<=8*60_000L && motion.steps[0]>=0){
                     boolean wet=r.optBoolean("wet"),actual=motion.steps[0]>0;
                     String key=wet?(actual?"hit":"falseAlarm"):(actual?"miss":"dryCorrect");
                     score.put(key,score.optInt(key)+1);checked++;
