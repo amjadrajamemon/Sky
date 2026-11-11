@@ -21,6 +21,15 @@ public class NowcastSourceTest {
             if(dry==null||dry.raining)throw new AssertionError("No-rain METAR must not be labelled rainy");
             if(StationObservation.parse(new JSONArray().put(o),new String[]{"OPRN","Rawalpindi","33.616","73.099"},33.616,73.099,now+2*3600_000L)!=null)
                 throw new AssertionError("Stale station observations must be rejected");
+            JSONObject older=new JSONObject().put("icaoId","OPRN").put("obsTime","2026-11-11T09:10:00Z")
+                .put("rawOb","OPRN 110910Z 20005KT 9999 SCT030 21/18 Q1013");
+            StationObservation recent=StationObservation.parse(new JSONArray().put(older).put(o),
+                new String[]{"OPRN","Rawalpindi","33.616","73.099"},33.616,73.099,now);
+            if(recent==null||!recent.raining)throw new AssertionError("Must choose newest station observation");
+            JSONObject backup=new JSONObject(o.toString()).put("icaoId","OPIS");
+            StationObservation alternate=StationObservation.parse(new JSONArray().put(backup),
+                new String[]{"OPIS","Islamabad","33.549","72.825"},33.616,73.099,now);
+            if(alternate==null||!alternate.raining)throw new AssertionError("Backup airport must be usable");
             if(!RainNowcastJson.decode(new JSONObject()).radarState.equals("unavailable"))throw new AssertionError("Default radar should be unavailable");
             if(n.current(now))throw new AssertionError("Uninitialized nowcast must not be current");
             System.out.println("Nowcast source, station METAR and JSON regression tests passed");

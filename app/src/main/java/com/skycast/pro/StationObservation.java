@@ -40,6 +40,7 @@ public final class StationObservation {
     }
     static StationObservation parse(JSONArray observations,String[] station,double latitude,double longitude,long now){
         if(observations==null||station==null)return null;
+        StationObservation latest=null;
         for(int i=0;i<observations.length();i++){
             JSONObject o=observations.optJSONObject(i);if(o==null||!station[0].equalsIgnoreCase(o.optString("icaoId",o.optString("stationId",""))))continue;
             long at=timestamp(o.opt("obsTime"));
@@ -47,9 +48,10 @@ public final class StationObservation {
             String weather=o.optString("wxString","");String raw=o.optString("rawOb","");
             boolean rain=CURRENT_RAIN.matcher(weather).find()||CURRENT_RAIN.matcher(raw).find();
             double km=distance(latitude,longitude,Double.parseDouble(station[2]),Double.parseDouble(station[3]));
-            return new StationObservation(station[0],station[1],km,at,rain,raw);
+            StationObservation sample=new StationObservation(station[0],station[1],km,at,rain,raw);
+            if(latest==null||sample.observedAt>latest.observedAt)latest=sample;
         }
-        return null;
+        return latest;
     }
     static long timestamp(Object raw){
         try{
@@ -59,11 +61,30 @@ public final class StationObservation {
         }catch(Exception e){return 0;}
     }
     static StationObservation fetch(double lat,double lon,long now)throws Exception{
-        String[] station=nearest(lat,lon);if(station==null)return null;
-        // Never silently move the target location to the airport; report distance.
-        String uri="https://aviationweather.gov/api/data/metar?ids="+station[0]+"&format=json&hours=2";
-        byte[] response=readNoaa(uri);
-        return parse(new JSONArray(new String(response,StandardCharsets.UTF_8)),station,lat,lon,now);
+        java.util.List<String[]> candidates=new java.util.ArrayList<>();
+        for(String[] station:STATIONS){
+            double km=distance(lat,lon,Double.parseDouble(station[2]),Double.parseDouble(station[3]));
+            if(km<=60)candidates.add(station);
+        }
+        if(candidates.isEmpty())return null;
+        candidates.sort((a,b)->Double.compare(
+            distance(lat,lon,Double.parseDouble(a[2]),Double.parseDouble(a[3])),
+            distance(lat,lon,Double.parseDouble(b[2]),Double.parseDouble(b[3]))));
+        StringBuilder ids=new StringBuilder();
+        for(int i=0;i<Math.min(3,candidates.size());i++){
+            if(i>0)ids.append(',');ids.append(candidates.get(i)[0]);
+        }
+        String uri="https://aviationweather.gov/api/data/metar?ids="+ids+"&format=json&hours=2";
+        JSONArray responses=new JSONArray(new String(readNoaa(uri),StandardCharsets.UTF_8));
+        StationObservation best=null;double bestScore=Double.POSITIVE_INFINITY;
+        for(int i=0;i<Math.min(3,candidates.size());i++){
+            StationObservation value=parse(responses,candidates.get(i),lat,lon,now);
+            if(value==null)continue;
+            // Prioritize proximity, but prefer a fresher report if the nearest station is much older.
+            double score=value.kilometers+Math.max(0,now-value.observedAt)/60_000.0*0.25;
+            if(score<bestScore){bestScore=score;best=value;}
+        }
+        return best;
     }
     private static byte[] readNoaa(String uri)throws Exception{
         java.net.HttpURLConnection c=(java.net.HttpURLConnection)new java.net.URL(uri).openConnection();
