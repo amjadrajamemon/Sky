@@ -23,7 +23,6 @@ public class NowcastSourceTest {
                 throw new AssertionError("Stale station observations must be rejected");
             if(!RainNowcastJson.decode(new JSONObject()).radarState.equals("unavailable"))throw new AssertionError("Default radar should be unavailable");
             if(n.current(now))throw new AssertionError("Uninitialized nowcast must not be current");
-            if(!RainNowcastEngine.class.getName().endsWith("RainNowcastEngine"))throw new AssertionError("Engine reference");
             System.out.println("Nowcast source, station METAR and JSON regression tests passed");
         }catch(Exception e){throw new RuntimeException(e);}
     }
