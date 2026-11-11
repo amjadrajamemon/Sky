@@ -1,0 +1,9 @@
+<resources>
+    <color name="night">#09172F</color>
+    <color name="night_card">#142B50</color>
+    <color name="light_ink">#F5FAFF</color>
+    <color name="sky_teal">#4DE0C1</color>
+    <color name="sky_blue">#8EC9FF</color>
+    <color name="alert_card">#443149</color>
+    <color name="alert_ink">#FFDCA0</color>
+</resources>

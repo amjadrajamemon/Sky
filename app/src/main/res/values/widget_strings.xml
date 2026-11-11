@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_weekly_label">SkyCast Weekly (4 × 2)</string>
+    <string name="widget_standard_label">SkyCast Weather (4 × 2)</string>
+    <string name="widget_compact_label">SkyCast Compact</string>
+    <string name="widget_app_name">SkyCast</string>
+    <string name="widget_customize">Customize widget</string>
+    <string name="widget_gear">⚙</string>
+    <string name="widget_loading">Loading forecast…</string>
+</resources>

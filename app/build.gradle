@@ -1,0 +1,19 @@
+plugins { id 'com.android.application' }
+
+dependencies { implementation 'org.jsoup:jsoup:1.24.1' }
+
+android {
+    namespace 'com.skycast.pro'
+    compileSdk 35
+    buildToolsVersion '35.0.0'
+    defaultConfig {
+        applicationId 'com.skycast.pro.next'
+        minSdk 26
+        targetSdk 34
+        versionCode 20006
+        versionName '2.0.0-alpha.6'
+    }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+    buildTypes { release { minifyEnabled false; shrinkResources false } }
+    lint { abortOnError true }
+}

@@ -1,0 +1,13 @@
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:targetCellWidth="4"
+    android:targetCellHeight="2"
+    android:minWidth="254dp"
+    android:minHeight="110dp"
+    android:minResizeWidth="220dp"
+    android:minResizeHeight="100dp"
+    android:initialLayout="@layout/widget_placeholder"
+    android:resizeMode="horizontal|vertical"
+    android:configure="com.skycast.pro.WidgetConfigActivity"
+    android:widgetFeatures="reconfigurable|configuration_optional"
+    android:updatePeriodMillis="0"
+    android:widgetCategory="home_screen" />

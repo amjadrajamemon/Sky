@@ -1,0 +1,113 @@
+{
+  "station": "OPIS",
+  "station_coordinates": [
+    33.5491,
+    72.8256
+  ],
+  "start_utc": "2026-09-01",
+  "end_utc": "2026-11-10",
+  "holdout_start_utc": "2026-10-16T00:00",
+  "lead_hours": [
+    24,
+    48
+  ],
+  "training_hours": 1073,
+  "holdout_hours": 621,
+  "complete_holdout_days_pk": 22,
+  "training_ranked_models": [
+    "ecmwf_ifs",
+    "icon_seamless",
+    "google_weathernext2_ensemble_mean",
+    "ncep_gfs_seamless"
+  ],
+  "chosen_model": "ecmwf_ifs",
+  "best_match_equals_ifs": true,
+  "scores": {
+    "ecmwf_ifs": {
+      "training_mae_c": [
+        1.218,
+        1.306
+      ],
+      "holdout_mae_c": [
+        1.277,
+        1.208
+      ],
+      "holdout_daily_high_mae_c": 1.084,
+      "holdout_daily_low_mae_c": 1.689
+    },
+    "icon_seamless": {
+      "training_mae_c": [
+        1.326,
+        1.362
+      ],
+      "holdout_mae_c": [
+        1.296,
+        1.384
+      ],
+      "holdout_daily_high_mae_c": 2.398,
+      "holdout_daily_low_mae_c": 0.836
+    },
+    "ncep_gfs_seamless": {
+      "training_mae_c": [
+        3.212,
+        3.375
+      ],
+      "holdout_mae_c": [
+        2.665,
+        2.947
+      ],
+      "holdout_daily_high_mae_c": 1.259,
+      "holdout_daily_low_mae_c": 3.684
+    },
+    "google_weathernext2_ensemble_mean": {
+      "training_mae_c": [
+        1.416,
+        1.483
+      ],
+      "holdout_mae_c": [
+        2.139,
+        2.107
+      ],
+      "holdout_daily_high_mae_c": 2.62,
+      "holdout_daily_low_mae_c": 2.295
+    },
+    "best_match": {
+      "training_mae_c": [
+        1.218,
+        1.306
+      ],
+      "holdout_mae_c": [
+        1.277,
+        1.208
+      ],
+      "holdout_daily_high_mae_c": 1.084,
+      "holdout_daily_low_mae_c": 1.689
+    }
+  },
+  "inputs": {
+    "iem-islamabad.csv": {
+      "url": "https://mesonet.agron.iastate.edu/cgi-bin/request/asos.py?station=OPIS&station=OPRN&data=tmpf&data=p01i&data=wxcodes&year1=2026&month1=9&day1=1&year2=2026&month2=11&day2=11&tz=Etc%2FUTC&format=onlycomma&latlon=yes&missing=M&trace=T&report_type=1&report_type=2",
+      "sha256": "0f1f8ac599bd6e9c32f2a1e392e1c38347b71162762011b7ce270f7fac0aebe9"
+    },
+    "runs-ecmwf_ifs.json": {
+      "url": "https://previous-runs-api.open-meteo.com/v1/forecast?latitude=33.5491&longitude=72.8256&models=ecmwf_ifs&hourly=temperature_2m_previous_day1%2Ctemperature_2m_previous_day2&start_date=2026-09-01&end_date=2026-11-10&timezone=GMT",
+      "sha256": "fdec18094b0005b70f459ecb0a23f5451edafa566c5ed7b714043f207218f789"
+    },
+    "runs-icon_seamless.json": {
+      "url": "https://previous-runs-api.open-meteo.com/v1/forecast?latitude=33.5491&longitude=72.8256&models=icon_seamless&hourly=temperature_2m_previous_day1%2Ctemperature_2m_previous_day2&start_date=2026-09-01&end_date=2026-11-10&timezone=GMT",
+      "sha256": "03c58c3f506370c09e7cb9efdf01b80f15ed50f91484be6f013ea4de05453c49"
+    },
+    "runs-ncep_gfs_seamless.json": {
+      "url": "https://previous-runs-api.open-meteo.com/v1/forecast?latitude=33.5491&longitude=72.8256&models=ncep_gfs_seamless&hourly=temperature_2m_previous_day1%2Ctemperature_2m_previous_day2&start_date=2026-09-01&end_date=2026-11-10&timezone=GMT",
+      "sha256": "6ef06dbe2452e76c3db5246053934f0dc2898860f28c0c1bc0c7748b0f60c31e"
+    },
+    "runs-google_weathernext2_ensemble_mean.json": {
+      "url": "https://previous-runs-api.open-meteo.com/v1/forecast?latitude=33.5491&longitude=72.8256&models=google_weathernext2_ensemble_mean&hourly=temperature_2m_previous_day1%2Ctemperature_2m_previous_day2&start_date=2026-09-01&end_date=2026-11-10&timezone=GMT",
+      "sha256": "371acce6371bdd9289bc1ce08b8c9f783342566d1e3a94e450c682ecdcf5a973"
+    },
+    "runs-best_match.json": {
+      "url": "https://previous-runs-api.open-meteo.com/v1/forecast?latitude=33.5491&longitude=72.8256&models=best_match&hourly=temperature_2m_previous_day1%2Ctemperature_2m_previous_day2&start_date=2026-09-01&end_date=2026-11-10&timezone=GMT",
+      "sha256": "caa81d5f524a6578ecb64b0bcffb389b9b294c2ed8717537339fda23972bf82e"
+    }
+  }
+}

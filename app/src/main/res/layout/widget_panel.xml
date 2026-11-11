@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent">
+    <FrameLayout android:id="@+id/widget_card" android:layout_width="match_parent"
+        android:layout_height="match_parent" android:clipToOutline="true"
+        android:background="@drawable/widget_outline">
+        <ImageView android:id="@+id/widget_background" android:layout_width="match_parent"
+            android:layout_height="match_parent" android:scaleType="fitXY"
+            android:importantForAccessibility="no" />
+        <LinearLayout android:id="@+id/widget_content" android:layout_width="match_parent"
+            android:layout_height="match_parent" android:orientation="vertical"
+            android:paddingHorizontal="9dp" android:paddingTop="5dp" android:paddingBottom="5dp">
+            <LinearLayout android:id="@+id/widget_header" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:gravity="center_vertical"
+                android:orientation="horizontal">
+                <TextView android:id="@+id/widget_city" android:layout_width="0dp"
+                    android:layout_height="wrap_content" android:layout_weight="1"
+                    android:ellipsize="end" android:maxLines="1"
+                    android:includeFontPadding="false" android:textSize="10sp"
+                    android:textStyle="bold" android:textColor="#FFFFFF" />
+                <TextView android:id="@+id/widget_settings" android:layout_width="26dp"
+                    android:layout_height="22dp" android:contentDescription="@string/widget_customize"
+                    android:gravity="end|center_vertical" android:includeFontPadding="false"
+                    android:text="@string/widget_gear" android:textColor="#7EE5DF" android:textSize="15sp" />
+            </LinearLayout>
+            <LinearLayout android:id="@+id/widget_now" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:orientation="horizontal"
+                android:gravity="center_vertical" android:baselineAligned="false">
+                <TextView android:id="@+id/widget_live_label" android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" android:includeFontPadding="false"
+                    android:paddingEnd="7dp" android:text="LIVE" android:textStyle="bold"
+                    android:textSize="9sp" android:textColor="#7EE5DF" />
+                <TextView android:id="@+id/widget_temp" android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" android:includeFontPadding="false"
+                    android:maxLines="1" android:text="21°" android:textSize="27sp"
+                    android:textStyle="bold" android:textColor="#FFFFFF" />
+                <TextView android:id="@+id/widget_condition" android:layout_width="0dp"
+                    android:layout_height="wrap_content" android:layout_weight="1"
+                    android:paddingStart="10dp" android:ellipsize="end" android:maxLines="1"
+                    android:includeFontPadding="false" android:textSize="10sp" android:textColor="#BDE4F4" />
+                <ImageView android:id="@+id/widget_icon" android:layout_width="35dp"
+                    android:layout_height="31dp" android:scaleType="centerInside"
+                    android:importantForAccessibility="no" />
+            </LinearLayout>
+            <LinearLayout android:id="@+id/widget_rain_panel" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:orientation="vertical"
+                android:layout_marginTop="1dp" android:paddingHorizontal="6dp"
+                android:paddingVertical="2dp" android:background="@drawable/bg_alert">
+                <TextView android:id="@+id/widget_alert_head" android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:includeFontPadding="false"
+                    android:ellipsize="end" android:maxLines="1" android:textStyle="bold"
+                    android:textSize="13sp" android:textColor="#FFFFFF" />
+                <TextView android:id="@+id/widget_alert_sub" android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:includeFontPadding="false"
+                    android:ellipsize="end" android:maxLines="1" android:textSize="9sp"
+                    android:textColor="#7EE5DF" />
+            </LinearLayout>
+            <LinearLayout android:id="@+id/widget_week_section" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:orientation="vertical"
+                android:layout_marginTop="2dp">
+                <TextView android:id="@+id/widget_week_label" android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:includeFontPadding="false"
+                    android:text="7-DAY OUTLOOK" android:textStyle="bold" android:textSize="8sp"
+                    android:textColor="#BDE4F4" />
+                <LinearLayout android:id="@+id/widget_days" android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:orientation="horizontal"
+                    android:gravity="center_vertical" />
+            </LinearLayout>
+            <TextView android:id="@+id/widget_message" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:includeFontPadding="false"
+                android:maxLines="2" android:textColor="#FFFFFF" android:textSize="12sp"
+                android:visibility="gone" />
+            <TextView android:id="@+id/widget_footer" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:includeFontPadding="false"
+                android:maxLines="1" android:ellipsize="end" android:textColor="#BDE4F4"
+                android:textSize="8sp" />
+        </LinearLayout>
+    </FrameLayout>
+</FrameLayout>
