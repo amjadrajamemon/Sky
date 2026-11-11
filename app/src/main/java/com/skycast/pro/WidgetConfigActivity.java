@@ -33,10 +33,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public final class WidgetConfigActivity extends Activity {
-    private static final int[] REFRESH_INTERVALS = {0, 30, 60, 120, 180};
+    private static final int[] REFRESH_INTERVALS = {0, 15, 30, 60, 120, 180};
     private final ExecutorService search = Executors.newSingleThreadExecutor();
     private final Runnable updatePreview = this::refreshPreview;
-    private final List<EditText> colorFields = new ArrayList<>();
     private WidgetSettings settings;
     private int widgetId;
     private int preset;
@@ -98,7 +97,6 @@ public final class WidgetConfigActivity extends Activity {
 
     private void build() {
         if (preview != null) preview.removeCallbacks(updatePreview);
-        colorFields.clear();
         LinearLayout root = column();
         root.setBackgroundColor(0xff0b1727);
         root.setPadding(dp(14), dp(8), dp(14), dp(8));
@@ -146,18 +144,19 @@ public final class WidgetConfigActivity extends Activity {
         check("Settings icon", "settingsIcon");
 
         heading("Appearance");
-        select("Visual theme", WidgetSettings.THEMES, settings.theme(), value -> change("theme", value));
+        select("Visual theme · full palette / typography / backdrop / icons", WidgetSettings.THEMES, settings.theme(), value -> change("theme", value));
+        select("Weather icon collection", WidgetSettings.ICON_STYLES, settings.chosenIconStyle(), value -> change("iconStyle", value));
         select("Typeface", WidgetSettings.FONTS, settings.font(), value -> change("font", value));
         slider("Background opacity", 0, 100, settings.opacity(), "%", value -> change("opacity", value));
         slider("Overall text scale", 70, 150, settings.textSize(), "%", value -> change("textSize", value));
         slider("Weather icon scale", 40, 150, settings.iconSize(), "%", value -> change("iconSize", value));
-        edit("Background #hex", "Theme default", "background", true);
-        edit("Primary text #hex", "Theme default", "foreground", true);
-        edit("Accent #hex", "Theme default", "accent", true);
-        edit("Rain chance #hex", "Accent default", "rainColor", true);
-        edit("Rain amount #hex", "Primary default", "amountColor", true);
-        edit("Day heading #hex", "Accent default", "dayColor", true);
-        edit("Condition #hex", "Accent default", "conditionColor", true);
+        colorSlider("Background", "background", settings.background());
+        colorSlider("Primary text", "foreground", settings.foreground());
+        colorSlider("Accent", "accent", settings.accent());
+        colorSlider("Rain chance", "rainColor", settings.rainColor());
+        colorSlider("Rain amount", "amountColor", settings.amountColor());
+        colorSlider("Day heading", "dayColor", settings.dayColor());
+        colorSlider("Condition", "conditionColor", settings.conditionColor());
 
         heading("Element sizes · sp");
         sizeSlider("City title", "title", 10, 7, 24);
@@ -188,7 +187,7 @@ public final class WidgetConfigActivity extends Activity {
         select("Provider", sources, selected, index -> change("provider", index == 0 ? "" : WeatherApi.MODEL_IDS[index - 1]));
         int refresh = 0;
         for (int i = 0; i < REFRESH_INTERVALS.length; i++) if (settings.refreshMinutes() == REFRESH_INTERVALS[i]) refresh = i;
-        select("Refresh interval", new String[]{"Follow app", "30 minutes", "1 hour", "2 hours", "3 hours"},
+        select("Refresh interval", new String[]{"Follow app", "15 min · Rain priority", "30 minutes", "1 hour", "2 hours", "3 hours"},
                 refresh, index -> change("refreshMinutes", REFRESH_INTERVALS[index]));
 
         LinearLayout actions = new LinearLayout(this);
@@ -201,6 +200,7 @@ public final class WidgetConfigActivity extends Activity {
     }
 
     private void change(String key, Object value) {
+        if ("theme".equals(key) && ((Number)value).intValue()!=settings.theme()) settings.resetThemeOverrides();
         settings.set(key, value);
         if (preview != null) {
             preview.removeCallbacks(updatePreview);
@@ -321,14 +321,6 @@ public final class WidgetConfigActivity extends Activity {
     }
 
     private void save() {
-        for (EditText field : colorFields) {
-            String value = field.getText().toString().trim();
-            if (!value.isEmpty() && !value.matches("#?[0-9A-Fa-f]{6}")) {
-                field.setError("Use six hex digits, for example #143729");
-                field.requestFocus();
-                return;
-            }
-        }
         if (WeatherWidget.kindFor(this, widgetId) < 0) {
             finish();
             return;
@@ -414,6 +406,42 @@ public final class WidgetConfigActivity extends Activity {
         });
         form.addView(slider);
     }
+    private void colorSlider(String name, String key, int initial) {
+        Button button=button(name + "  ●", () -> showColorDialog(name,key,initial));
+        button.setContentDescription("Adjust " + name + " with hue, saturation and brightness sliders");
+        button.setTextColor(initial | 0xff000000);
+        form.addView(button);
+    }
+    private void showColorDialog(String name, String key, int base) {
+        final String before=settings.text(key);
+        final float[] hsv=new float[3];Color.colorToHSV(base,hsv);
+        LinearLayout panel=column();panel.setPadding(dp(20),dp(10),dp(20),dp(8));
+        TextView swatch=label("●  " + name,18);swatch.setTextColor(base);panel.addView(swatch);
+        int[] current={base};
+        java.util.function.IntConsumer draw=(ignored)->{
+            int color=Color.HSVToColor(hsv);
+            current[0]=color;swatch.setTextColor(color);
+            change(key,String.format(java.util.Locale.US,"#%06X",color & 0xffffff));
+        };
+        sliderInto(panel,"Hue",0,360,Math.round(hsv[0]),"°",v->{hsv[0]=v;draw.accept(v);});
+        sliderInto(panel,"Saturation",0,100,Math.round(hsv[1]*100),"%",v->{hsv[1]=v/100f;draw.accept(v);});
+        sliderInto(panel,"Brightness",0,100,Math.round(hsv[2]*100),"%",v->{hsv[2]=v/100f;draw.accept(v);});
+        new AlertDialog.Builder(this).setTitle(name + " color")
+                .setView(panel).setPositiveButton("Apply",(dialog,w)->build())
+                .setNeutralButton("Theme default",(dialog,w)->{settings.clear(key);build();})
+                .setNegativeButton("Cancel",(dialog,w)->{if(before.isEmpty())settings.clear(key);else settings.set(key,before);build();}).show();
+    }
+    private void sliderInto(LinearLayout parent,String label,int min,int max,int value,String suffix,java.util.function.IntConsumer callback) {
+        TextView text=label(label+" · "+value+suffix,13);parent.addView(text);
+        SeekBar seek=new SeekBar(this);seek.setMax(max-min);seek.setProgress(value-min);
+        seek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
+            @Override public void onProgressChanged(SeekBar bar,int position,boolean fromUser){
+                int v=position+min;text.setText(label+" · "+v+suffix);if(fromUser)callback.accept(v);
+            }
+            @Override public void onStartTrackingTouch(SeekBar b){}
+            @Override public void onStopTrackingTouch(SeekBar b){}
+        });parent.addView(seek);
+    }
     private void sizeSlider(String label, String key, int fallback, int min, int max) {
         slider(label, min, max, settings.size(key, fallback), "sp", value -> change("size_" + key, value));
     }
@@ -429,7 +457,6 @@ public final class WidgetConfigActivity extends Activity {
             @Override public void onTextChanged(CharSequence text, int start, int before, int count) {change(key, text.toString());}
             @Override public void afterTextChanged(Editable text) {}
         });
-        if (color) colorFields.add(field);
         form.addView(field);
     }
     @Override protected void onSaveInstanceState(Bundle state) {

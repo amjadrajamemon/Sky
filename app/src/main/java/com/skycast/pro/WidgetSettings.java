@@ -14,14 +14,18 @@ final class WidgetSettings {
             "Live + today + seven days (classic)", "Temperature only", "Temperature + rain",
             "Today + seven days", "Live + seven days", "Live + today", "Today only"};
     static final String[] THEMES = {"Aurora glass", "Arctic light", "Obsidian", "Ocean depth",
-            "Forest mist", "Violet dusk", "Solar sand", "Graphite"};
+            "Forest mist", "Violet dusk", "Solar sand", "Graphite", "Neon radar", "Editorial minimal"};
+    static final String[] ICON_STYLES = {"Follow theme", "Illustrated", "Outline", "Neon glow", "Soft glass", "Flat", "Monochrome", "Badge", "Pastel", "High contrast", "Minimal"};
+    private static final int[] THEME_ICONS = {4, 8, 9, 4, 5, 3, 7, 6, 3, 10};
+    private static final int[] THEME_FONTS = {0, 1, 2, 0, 1, 4, 3, 2, 4, 3};
+    private static final int[] THEME_DENSITY = {0, 1, 0, 1, 1, 0, 1, 0, 0, 1};
     static final String[] FONTS = {"Modern sans", "Rounded sans", "Condensed", "Serif", "Monospace"};
     private static final int[] BACKGROUNDS = {0xff102b43, 0xffe8f4fb, 0xff10151e, 0xff09293b,
-            0xff12372c, 0xff2b234d, 0xfff4e6c9, 0xff252b34};
+            0xff12372c, 0xff2b234d, 0xfff4e6c9, 0xff252b34, 0xff090d24, 0xfffdfcf8};
     private static final int[] TEXT = {0xfff2faff, 0xff143047, 0xffeff7ff, 0xffeffaff,
-            0xfff2fff5, 0xfff7efff, 0xff2c241d, 0xfff0f3f8};
+            0xfff2fff5, 0xfff7efff, 0xff2c241d, 0xfff0f3f8, 0xfff5f7ff, 0xff282a30};
     private static final int[] ACCENTS = {0xff69e2f6, 0xff126ea1, 0xffb4dfff, 0xff65cfeb,
-            0xff9cebc0, 0xffe1b7ff, 0xff9b5d18, 0xffd2e2fb};
+            0xff9cebc0, 0xffe1b7ff, 0xff9b5d18, 0xffd2e2fb, 0xfffb3acc, 0xffe16d36};
     private final JSONObject values;
 
     WidgetSettings() { this(new JSONObject()); }
@@ -31,7 +35,9 @@ final class WidgetSettings {
         return context.getSharedPreferences("skycast_widget_settings", Context.MODE_PRIVATE);
     }
     static WidgetSettings load(Context context, int id) {
-        try { return decode(preferences(context).getString("widget_" + id, "{}")); }
+        try { WidgetSettings result=decode(preferences(context).getString("widget_" + id, "{}"));
+            if (!result.values.has("theme")) result.set("theme",new AppPrefs(context).appTheme());
+            return result; }
         catch (ClassCastException e) { return new WidgetSettings(); }
     }
     static WidgetSettings decode(String value) {
@@ -51,6 +57,10 @@ final class WidgetSettings {
         catch (JSONException e) { throw new IllegalArgumentException("Invalid widget setting", e); }
     }
     String text(String key) { return values.optString(key, ""); }
+    void resetThemeOverrides() {
+        for(String key:new String[]{"background","foreground","accent","rainColor","amountColor", "dayColor", "conditionColor", "font", "density"}) values.remove(key);
+    }
+    void clear(String key) { values.remove(key); }
     boolean show(String key) { return showOption(key, !("source".equals(key) || "updated".equals(key) || "weekLabel".equals(key))); }
     private int range(String key, int fallback, int min, int max) {
         return Math.min(max, Math.max(min, values.optInt(key, fallback)));
@@ -60,8 +70,10 @@ final class WidgetSettings {
     int days() { return range("days", 7, 1, 7); }
     int textSize() { return range("textSize", 100, 70, 150); }
     int size(String element, int fallback) { return range("size_" + element, fallback, 7, 40); }
-    int font() { return range("font", 0, 0, FONTS.length - 1); }
-    int density() { return range("density", 0, 0, 2); }
+    int font() { return range("font", THEME_FONTS[theme()], 0, FONTS.length - 1); }
+    int chosenIconStyle() {return range("iconStyle",0,0, ICON_STYLES.length - 1);}
+    int iconStyle() { int style = chosenIconStyle(); return style == 0 ? THEME_ICONS[theme()] : style; }
+    int density() { return range("density", THEME_DENSITY[theme()], 0, 2); }
     int align() { return range("align", 0, 0, 2); }
     boolean alternateOrder() { return values.optBoolean("alternateOrder", false); }
     boolean reverseWeek() { return values.optBoolean("reverseWeek", false); }
@@ -71,7 +83,7 @@ final class WidgetSettings {
     int units() { return range("units", 0, 0, 2); }
     int refreshMinutes() {
         int value = values.optInt("refreshMinutes", 0);
-        return value == 30 || value == 60 || value == 120 || value == 180 ? value : 0;
+        return value == 15 || value == 30 || value == 60 || value == 120 || value == 180 ? value : 0;
     }
     int refreshMinutes(AppPrefs app) {
         int minutes = refreshMinutes();

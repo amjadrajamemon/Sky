@@ -29,3 +29,12 @@ APK: `app/build/outputs/apk/debug/app-debug.apk`. The workflow uses GitHub's gen
 ## Verification scope
 
 `bash tools/run-core-tests.sh` and `python3 tools/qa_static.py` perform pure Java and structural checks. A successful GitHub Actions run will establish cloud APK compilation and lint; real launcher sizing and refresh behavior must still be tested on an Android device.
+
+### alpha.7: precipitation and appearance
+- Rain-priority 15-minute **requested** background cycle (Android can defer jobs; forecast model runs are less frequent).
+- Smart Auto compares 12 hours of rain signals with a distinct numerical model family (typically NOAA GFS), displaying agreement without presenting it as calibrated forecast accuracy.
+- MET Norway global-location feed respects a minimum three-hour HTTP recheck; Open-Meteo currently caches for at least 30 minutes. No genuine minute-by-minute rain radar is claimed for locations where only hourly model data is available.
+- 10 visual presets with associated icon drawings; 10 manual icon style choices plus automatic theme mapping. Individual widget colors are edited with hue/saturation/brightness sliders, with immediate preview.
+- Seven-day icons displayed in compact layouts, and seven-day icons in the app use the current app theme.
+- Color, icon size, density, fonts, and widget layout remain independently adjustable per widget.
+- Rain agreement is qualitative only and reflects model consistency, **not** observed certainty, reliability percentage, or an official weather warning.

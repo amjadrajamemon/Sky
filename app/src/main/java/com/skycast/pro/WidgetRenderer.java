@@ -25,7 +25,7 @@ final class WidgetRenderer {
         float density = context.getResources().getDisplayMetrics().density;
         Bitmap background = WidgetBackdropPainter.make(Math.min(320, Math.round(w * density * .55f)),
                 Math.min(180, Math.round(h * density * .55f)),
-                settings.background(), settings.accent(), settings.foreground());
+                settings.background(), settings.accent(), settings.foreground(), settings.theme());
         views.setImageViewBitmap(R.id.widget_background, background);
         float scale = settings.textSize() / 100f;
         int layout = settings.layout();
@@ -45,8 +45,8 @@ final class WidgetRenderer {
         boolean chance = settings.showOption("chance", true);
         boolean amount = settings.showOption("amount", true);
         boolean dayTemp = settings.show("highsLows") && height >= 150;
-        boolean weekIcons = settings.show("icons") && height >= 175;
-        boolean currentIcons = settings.show("icons") && height >= 124;
+        boolean weekIcons = settings.show("icons");
+        boolean currentIcons = settings.show("icons") && height >= 105;
         int weekCount = !hasData || !showWeek ? 0 : Math.min(settings.days(), forecast.days.size());
         if (layout == WidgetSettings.DEFAULT || layout == WidgetSettings.BOTH) weekCount = Math.min(7, weekCount);
         boolean tiny = h <= 125;
@@ -89,7 +89,7 @@ final class WidgetRenderer {
             views.setTextViewText(R.id.widget_condition, styled(forecast.conditionText.isEmpty()
                     ? ForecastMath.condition(forecast.weatherCode, forecast.day) : forecast.conditionText, settings));
             if (currentIcons) views.setImageViewBitmap(R.id.widget_icon,
-                    icon(context, forecast.weatherCode, forecast.day, 31, settings.iconSize()));
+                    icon(context, forecast.weatherCode, forecast.day, 31, settings));
         }
 
         boolean showRain = hasData && showToday && rain;
@@ -116,7 +116,7 @@ final class WidgetRenderer {
             text(cell, R.id.day_label, settings.foreground(), settings.size("dayName", 8), scale * compressed);
             visible(cell, R.id.day_icon, weekIcons);
             if (weekIcons) cell.setImageViewBitmap(R.id.day_icon,
-                    icon(context, day.weatherCode, true, 17, settings.iconSize()));
+                    icon(context, day.weatherCode, true, 17, settings));
             visible(cell, R.id.day_temp, dayTemp);
             cell.setTextViewText(R.id.day_temp, styled(ForecastMath.temp(day.highC, fahrenheit).replace("°", "")
                     + "/" + ForecastMath.temp(day.lowC, fahrenheit), settings));
@@ -142,9 +142,9 @@ final class WidgetRenderer {
     }
 
     static int dp(Context context, float value) { return Math.round(value * context.getResources().getDisplayMetrics().density); }
-    private static Bitmap icon(Context context, int code, boolean daytime, int sizeDp, int percent) {
-        int pixels = dp(context, sizeDp * percent / 100f);
-        Bitmap bitmap = WeatherIconPainter.make(code, daytime, Math.max(12, Math.min(256, pixels)));
+    private static Bitmap icon(Context context, int code, boolean daytime, int sizeDp, WidgetSettings settings) {
+        int pixels = dp(context, sizeDp * settings.iconSize() / 100f);
+        Bitmap bitmap = WeatherIconPainter.make(code, daytime, Math.max(12, Math.min(256, pixels)), settings.iconStyle(), settings.accent(), settings.foreground());
         bitmap.setDensity(context.getResources().getDisplayMetrics().densityDpi);
         return bitmap;
     }

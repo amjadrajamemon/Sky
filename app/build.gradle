@@ -10,8 +10,8 @@ android {
         applicationId 'com.skycast.pro.next'
         minSdk 26
         targetSdk 34
-        versionCode 20006
-        versionName '2.0.0-alpha.6'
+        versionCode 20007
+        versionName '2.0.0-alpha.7'
     }
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
     buildTypes { release { minifyEnabled false; shrinkResources false } }

@@ -29,7 +29,7 @@ public final class RefreshJob extends JobService {
         JobInfo existing = scheduler.getPendingJob(PERIODIC);
         if (existing != null && existing.getIntervalMillis() == interval) return;
         scheduler.schedule(new JobInfo.Builder(PERIODIC, new ComponentName(context, RefreshJob.class))
-                .setPeriodic(interval, 15 * 60_000L)
+                .setPeriodic(interval, 5 * 60_000L)
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY).setPersisted(true).build());
     }
 

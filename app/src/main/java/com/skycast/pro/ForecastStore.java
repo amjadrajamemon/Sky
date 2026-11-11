@@ -15,7 +15,7 @@ public final class ForecastStore {
             JSONObject j=new JSONObject();j.put("source",f.source);j.put("city",f.city);j.put("timezone",f.timezone);
             j.put("lat",safe(f.latitude));j.put("lon",safe(f.longitude));j.put("temp",safe(f.temperatureC));
             j.put("feels",safe(f.feelsLikeC));j.put("wind",safe(f.windKmh));j.put("humidity",safe(f.humidityPct));
-            j.put("code",f.weatherCode);j.put("day",f.day);j.put("status",f.status);j.put("conditionText",f.conditionText);
+            j.put("code",f.weatherCode);j.put("day",f.day);j.put("status",f.status);j.put("rainAgreement",f.rainAgreement);j.put("conditionText",f.conditionText);
             JSONArray days=new JSONArray();for(Forecast.Day d:f.days){JSONObject k=new JSONObject();
                 k.put("date",d.date);k.put("code",d.weatherCode);k.put("high",safe(d.highC));k.put("low",safe(d.lowC));
                 k.put("mm",safe(d.rainMm));k.put("pop",d.rainProbability);k.put("uv",safe(d.uvMax));days.put(k);}
@@ -35,7 +35,7 @@ public final class ForecastStore {
             if(prefs.hasLocation() && (Math.abs(f.latitude-prefs.lat())>0.005||Math.abs(f.longitude-prefs.lon())>0.005))return null;
             f.temperatureC=number(j,"temp");
             f.feelsLikeC=number(j,"feels");f.windKmh=number(j,"wind");f.humidityPct=number(j,"humidity");
-            f.weatherCode=j.optInt("code",-1);f.day=j.optBoolean("day",true);f.status=j.optString("status","");f.conditionText=j.optString("conditionText","");
+            f.weatherCode=j.optInt("code",-1);f.day=j.optBoolean("day",true);f.rainAgreement=j.optString("rainAgreement","");f.status=j.optString("status","");f.conditionText=j.optString("conditionText","");
             java.time.ZoneId zone;try{zone=java.time.ZoneId.of(f.timezone);}catch(Exception e){zone=java.time.ZoneId.systemDefault();}
             java.time.LocalDateTime now=java.time.LocalDateTime.now(zone).withMinute(0).withSecond(0).withNano(0);
             JSONArray days=j.optJSONArray("days");if(days!=null)for(int i=0;i<days.length();i++){

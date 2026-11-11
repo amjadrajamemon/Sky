@@ -20,6 +20,8 @@ public final class Forecast {
     public boolean cached, stale;
     public String status = "";
     public String conditionText = "";
+    /** Optional qualitative cross-model rain signal, not a calibrated accuracy rating. */
+    public String rainAgreement = "";
     public final List<Hour> hours = new ArrayList<>();
     public final List<Day> days = new ArrayList<>();
 

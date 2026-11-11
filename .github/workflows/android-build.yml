@@ -37,10 +37,10 @@ jobs:
       - name: Verify compiled APK
         run: |
           test -s app/build/outputs/apk/debug/app-debug.apk
-          $ANDROID_HOME/build-tools/35.0.0/apksigner verify --verbose app/build/outputs/apk/debug/app-debug.apk
-          $ANDROID_HOME/build-tools/35.0.0/aapt dump badging app/build/outputs/apk/debug/app-debug.apk | head -12
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose app/build/outputs/apk/debug/app-debug.apk
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging app/build/outputs/apk/debug/app-debug.apk | head -12
       - uses: actions/upload-artifact@v4
         with:
-          name: SkyCastPro-Next-v2.0.0-alpha.6-debug
+          name: SkyCastPro-Next-v2.0.0-alpha.7-debug
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error

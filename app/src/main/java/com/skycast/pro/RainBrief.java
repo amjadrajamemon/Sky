@@ -63,7 +63,8 @@ public final class RainBrief {
         int duration = 0;
         for (int i = first; i < wet.length && known[i] && wet[i]; i++) duration++;
         String onset = first == 0 ? "Rain signal this hour" : "Rain signal in ~" + first + "h";
-        return onset + (duration > 0 ? " · ~" + duration + "h window" : "");
+        return onset + (duration > 0 ? " · ~" + duration + "h window" : "")
+                + (f.stale ? " · Older forecast" : f.rainAgreement.isEmpty() ? "" : " · " + f.rainAgreement);
     }
 
     private static String tomorrow(Forecast f) {

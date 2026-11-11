@@ -83,14 +83,27 @@ public final class WeatherCoordinator {
                 }
             } else {
                 forecast.city=p.city();
-                if(appForecast && smart && p.compare() && SystemClock.elapsedRealtime()-started<8000L) {
+                // A second *model family* checks whether near-term rain signals corroborate.
+                // Models are delivered by Open-Meteo, so this is not independent observation.
+                if(appForecast && smart && p.compare() && SystemClock.elapsedRealtime()-started < 12_000L) {
                     try {
-                        Forecast independent="metno".equals(actualModel)?api.fetchOpenMeteo(lat,lon,"best_match",false):api.fetchMetNorway(lat,lon,false);
-                        ForecastQuality.prepare(independent,Instant.now());
-                        forecast.status+=(forecast.status.isEmpty()?"":"\n")+ForecastMath.temperatureAgreement(forecast.temperatureC,independent.temperatureC)
-                         + " · "+forecast.source+" vs "+independent.source;
-                        if(independent.stale)forecast.status+=" · comparison cached";
-                    }catch(Exception ignored){forecast.status+="\nIndependent comparison temporarily unavailable";}
+                        String comparisonModel="ncep_gfs_seamless".equals(actualModel)
+                                ? "ecmwf_ifs" : "ncep_gfs_seamless";
+                        Forecast second=api.fetchOpenMeteo(lat,lon,comparisonModel,false);
+                        ForecastQuality.prepare(second,Instant.now());
+                        if(!second.stale) {
+                            forecast.rainAgreement=RainAgreement.compare(forecast,second,
+                                    ForecastQuality.hourStart(Instant.now(),forecast.timezone));
+                            forecast.status+=(forecast.status.isEmpty()?"":"\n")
+                                +ForecastMath.temperatureAgreement(forecast.temperatureC,second.temperatureC)
+                                +" · model comparison: "+WeatherApi.modelLabel(comparisonModel);
+                            if(!forecast.rainAgreement.isEmpty()) forecast.status+=" · "+forecast.rainAgreement;
+                        } else {
+                            forecast.status+="\nRain comparison unavailable (older secondary data)";
+                        }
+                    } catch(Exception ignored) {
+                        forecast.status+="\nRain model comparison temporarily unavailable";
+                    }
                 }
                 String routing=smart?"Smart Auto · "+WeatherApi.modelLabel(actualModel)
                     :actualModel.equals(model)?"Selected source active":"Backup source · "+WeatherApi.modelLabel(actualModel);

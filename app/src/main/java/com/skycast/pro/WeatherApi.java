@@ -169,7 +169,7 @@ public final class WeatherApi {
 
     public Forecast fetchMetNorway(double lat,double lon,boolean force) throws Exception {
         String url=String.format(Locale.US,"https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=%.4f&lon=%.4f",lat,lon);
-        JSONObject result=cachedGet(url,60*60_000L,6*3600_000L,force);
+        JSONObject result=cachedGet(url,180*60_000L,12*3600_000L,false);
         Forecast f=new Forecast();f.source="MET Norway · Locationforecast";f.latitude=lat;f.longitude=lon;
         f.city=prefs.city();f.timezone=prefs.timezone();f.cached=result.optBoolean("_skycast_cache");
         f.stale=result.optBoolean("_skycast_stale");f.status=result.optString("_skycast_error","");

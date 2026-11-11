@@ -7,11 +7,43 @@ import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Shader;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
 
 /** Consistent resolution-independent widget icon illustrations, no system emoji dependencies. */
 public final class WeatherIconPainter {
     private static final int WHITE=0xFFF7FCFF,BLUE=0xFFACDFFF,CYAN=0xFF58DEFF,GOLD=0xFFFFD96C;
     private WeatherIconPainter(){}
+    /** Ten local vector treatments; family follows the widget theme unless overridden. */
+    public static Bitmap make(int code, boolean daytime, int px, int style, int accent, int ink) {
+        if(style==1)return make(code,daytime,px);
+        Bitmap original=make(code,daytime,px);
+        Bitmap result=Bitmap.createBitmap(px,px,Bitmap.Config.ARGB_8888);
+        Canvas canvas=new Canvas(result);
+        Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
+        float mid=px/2f;
+        if(style==4 || style==7 || style==8 || style==9) {
+            paint.setColor((style==9?0x32:style==7?0x45:0x27)<<24 | (accent & 0xffffff));
+            canvas.drawCircle(mid,mid,px*.47f,paint);
+            paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(Math.max(1,px*.025f));
+            paint.setColor((0x9f<<24)|(accent&0xffffff));
+            canvas.drawCircle(mid,mid,px*.47f,paint);paint.setStyle(Paint.Style.FILL);
+        }
+        if(style==2||style==6||style==10) {
+            paint.setColorFilter(new PorterDuffColorFilter(style==6?ink:accent,PorterDuff.Mode.SRC_IN));
+        } else if(style==5) {
+            paint.setColorFilter(new PorterDuffColorFilter(ink,PorterDuff.Mode.MULTIPLY));
+        }
+        if(style==3) {
+            paint.setShadowLayer(px*.12f,0,0,accent);
+            canvas.drawBitmap(original,0,0,paint);paint.clearShadowLayer();
+        }
+        if(style==10) {
+            canvas.save();canvas.scale(.83f,.83f,mid,mid);
+            canvas.drawBitmap(original,0,0,paint);canvas.restore();
+        } else canvas.drawBitmap(original,0,0,paint);
+        return result;
+    }
     public static Bitmap make(int code,boolean daytime,int px) {
         Bitmap bitmap=Bitmap.createBitmap(px,px,Bitmap.Config.ARGB_8888);
         Canvas c=new Canvas(bitmap);c.scale(px/128f,px/128f);

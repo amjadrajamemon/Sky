@@ -7,8 +7,11 @@ javac -encoding UTF-8 -d "$OUT" \
   "$ROOT/app/src/main/java/com/skycast/pro/Forecast.java" \
   "$ROOT/app/src/main/java/com/skycast/pro/ForecastQuality.java" \
   "$ROOT/app/src/main/java/com/skycast/pro/ForecastMath.java" \
+  "$ROOT/app/src/main/java/com/skycast/pro/RainAgreement.java" \
   "$ROOT/app/src/main/java/com/skycast/pro/RainBrief.java" \
   "$ROOT/tools/ForecastMathTest.java" \
-  "$ROOT/tools/WidgetForecastTest.java"
+  "$ROOT/tools/WidgetForecastTest.java" \
+  "$ROOT/tools/RainAgreementTest.java"
 java -cp "$OUT" ForecastMathTest
 java -cp "$OUT" WidgetForecastTest
+java -cp "$OUT" RainAgreementTest
