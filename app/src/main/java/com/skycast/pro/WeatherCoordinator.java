@@ -118,6 +118,10 @@ public final class WeatherCoordinator {
                 error="Location or source changed";
             } else if(forecast!=null){
                 p.setTimezone(forecast.timezone);
+                if(!forecast.stale){
+                    try { forecast.nowcast=new RainNowcastRepository(app,p).update(forecast,force); }
+                    catch(Exception ignored) { forecast.nowcast=new RainNowcastRepository(app,p).cached(); }
+                } else { forecast.nowcast=new RainNowcastRepository(app,p).cached(); }
                 store.save(forecast);
                 if(appForecast)RainNotifier.evaluate(app,forecast);
             }

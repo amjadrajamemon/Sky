@@ -22,6 +22,8 @@ public final class Forecast {
     public String conditionText = "";
     /** Optional qualitative cross-model rain signal, not a calibrated accuracy rating. */
     public String rainAgreement = "";
+    /** Optional independently timestamped 0–2 h radar/observation nowcast. */
+    public RainNowcast nowcast;
     public final List<Hour> hours = new ArrayList<>();
     public final List<Day> days = new ArrayList<>();
 

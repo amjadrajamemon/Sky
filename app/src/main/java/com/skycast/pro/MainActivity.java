@@ -57,14 +57,15 @@ public final class MainActivity extends Activity {
     private LinearLayout root,currentHolder,forecastRow;
     private TextView status,locationLabel,temperatureLabel,conditionLabel,metricsLabel,rainHead,rainSub,sourceLabel,aqiLabel;
     private WeatherSceneView scene;
-    private TextView comparisonLabel;
+    private TextView comparisonLabel, nowcastHead, nowcastDetail, nowcastTrust;
     private Button refreshButton;
     @Override public void onCreate(Bundle saved){
         super.onCreate(saved);prefs=new AppPrefs(this);applyTheme(prefs.appTheme());
         getWindow().setStatusBarColor(NAVY);getWindow().setNavigationBarColor(NAVY);
         createUi();RefreshJob.schedule(this);render(new ForecastStore(this).load(),"");
         if(!prefs.hasLocation())locationDialog();
-        else if(System.currentTimeMillis()-prefs.lastSuccess()>55*60_000L)refresh(false);
+        else if(System.currentTimeMillis()-prefs.lastSuccess()>55*60_000L || new RainNowcastRepository(this,prefs).cached()==null ||
+            !new RainNowcastRepository(this,prefs).cached().current(System.currentTimeMillis()))refresh(false);
     }
     private int dp(float n){return Math.round(n*getResources().getDisplayMetrics().density);}
     private GradientDrawable bg(int color,int radius){
@@ -112,6 +113,13 @@ public final class MainActivity extends Activity {
         rain.addView(label("RAIN OUTLOOK · NEXT 48 HOURS",12,GOLD,true));
         rainHead=label("—",16,INK,true);rain.addView(rainHead,cardParams(7));
         rainSub=label("Forecast period",12,GOLD,false);rain.addView(rainSub,cardParams(3));
+        LinearLayout now=column();now.setPadding(dp(14),dp(12),dp(14),dp(12));
+        now.setBackground(bg(CARD,16));root.addView(now,cardParams(11));
+        now.addView(label("RAIN NOWCAST · NEXT 0–2 HOURS",12,TEAL,true));
+        nowcastHead=label("Checking radar availability…",17,INK,true);now.addView(nowcastHead,cardParams(7));
+        nowcastDetail=label("Radar motion · model · nearby airport observations",12,MUTED,false);now.addView(nowcastDetail,cardParams(4));
+        nowcastTrust=label("Rain is an estimate. Check timestamps before relying on alerts.",11,MUTED,false);now.addView(nowcastTrust,cardParams(4));
+        now.addView(button("Live radar preview & nowcast  ↗",()->startActivity(new Intent(this,RadarPreviewActivity.class))),cardParams(8));
         root.addView(label("DAILY FORECAST",15,INK,true),cardParams(20));
         HorizontalScrollView horizontal=new HorizontalScrollView(this);horizontal.setHorizontalScrollBarEnabled(false);
         forecastRow=row();horizontal.addView(forecastRow,new ViewGroup.LayoutParams(-2,-2));root.addView(horizontal,cardParams(9));
@@ -162,6 +170,17 @@ public final class MainActivity extends Activity {
         metricsLabel.setText("Feels "+ForecastMath.temp(f.feelsLikeC,prefs.fahrenheit())
             +" · Humidity "+(Double.isFinite(f.humidityPct)?Math.round(f.humidityPct)+"%":"—")
             +"\nWind "+(Double.isFinite(f.windKmh)?Math.round(f.windKmh)+" km/h":"—"));
+        RainNowcast n=f.nowcast;
+        if(n!=null){
+            long now=System.currentTimeMillis();
+            nowcastHead.setText((n.current(now)?"":"Older result · ")+n.headline);
+            nowcastDetail.setText(n.detail);
+            nowcastTrust.setText(n.evidence+" · "+n.radarState);
+        }else{
+            nowcastHead.setText("Radar and station observations not checked yet");
+            nowcastDetail.setText("Use Refresh to request current sources");
+            nowcastTrust.setText("No local nowcast evidence available");
+        }
         ForecastMath.RainWindow rain=ForecastMath.rainWindow(f,java.time.Instant.now());
         rainHead.setText(f.hours.isEmpty()?"Hourly rain outlook unavailable for this source":rain.headline());
         rainSub.setText(f.hours.isEmpty()?"Hourly timing unavailable · check daily rain chances"
@@ -206,6 +225,7 @@ public final class MainActivity extends Activity {
         LinearLayout col=column();col.setPadding(dp(20),dp(15),dp(20),0);
         CheckBox f=new CheckBox(this);f.setText("Use Fahrenheit");f.setChecked(prefs.fahrenheit());col.addView(f);
         CheckBox compare=new CheckBox(this);compare.setText("Compare independent sources in Smart Auto");compare.setChecked(prefs.compare());col.addView(compare);
+        CheckBox radarOpt=new CheckBox(this);radarOpt.setText("Use keyless live radar and station observations");radarOpt.setChecked(prefs.radarEnabled());col.addView(radarOpt);
         CheckBox alerts=new CheckBox(this);alerts.setText("Optional rain forecast notifications");alerts.setChecked(prefs.rainAlerts());col.addView(alerts);
         TextView themeLabel=label("App-wide visual theme",12,INK,false);col.addView(themeLabel);
         Spinner theme=new Spinner(this);
@@ -218,7 +238,7 @@ public final class MainActivity extends Activity {
         new AlertDialog.Builder(this).setTitle("Forecast settings").setView(col)
             .setPositiveButton("Apply",(d,w)->{
                 int oldTheme=prefs.appTheme();prefs.setAppTheme(theme.getSelectedItemPosition());
-                prefs.setFahrenheit(f.isChecked());prefs.setCompare(compare.isChecked());prefs.setRainAlerts(alerts.isChecked());
+                prefs.setFahrenheit(f.isChecked());prefs.setCompare(compare.isChecked());prefs.setRainAlerts(alerts.isChecked());prefs.setRadarEnabled(radarOpt.isChecked());
                 prefs.setRefreshMinutes(schedule.getSelectedItemPosition()==0?15:schedule.getSelectedItemPosition()==1?30:schedule.getSelectedItemPosition()==3?180:60);
                 RefreshJob.schedule(this);
                 if(alerts.isChecked() && Build.VERSION.SDK_INT>=33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED)

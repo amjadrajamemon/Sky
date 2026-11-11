@@ -40,6 +40,10 @@ public final class RainBrief {
 
     /** First uninterrupted hourly rain signal, never claiming minute-level nowcasting. */
     public static String timing(Forecast f, Instant now) {
+        RainNowcast n=f.nowcast;
+        if(n!=null && n.validRadar(now.toEpochMilli()) && n.radarMoving && n.current(now.toEpochMilli())){
+            return n.headline+" · "+n.intensity.toLowerCase(java.util.Locale.US);
+        }
         LocalDateTime base;
         try { base = ForecastQuality.hourStart(now, f.timezone); }
         catch (DateTimeException ex) { return "Rain timing unavailable"; }

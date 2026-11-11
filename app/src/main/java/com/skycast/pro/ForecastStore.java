@@ -21,6 +21,7 @@ public final class ForecastStore {
                 k.put("mm",safe(d.rainMm));k.put("pop",d.rainProbability);k.put("uv",safe(d.uvMax));days.put(k);}
             JSONArray hours=new JSONArray();for(Forecast.Hour h:f.hours){JSONObject k=new JSONObject();
                 k.put("time",h.time);k.put("code",h.weatherCode);k.put("mm",safe(h.rainMm));k.put("pop",h.rainProbability);hours.put(k);}
+            if(f.nowcast!=null)j.put("nowcast",RainNowcastJson.encode(f.nowcast));
             j.put("days",days);j.put("hours",hours);j.put("rainHourStarts",true);j.put("stale",f.stale);
             prefs.saveForecast(j.toString(), f.fetchedAt>0?f.fetchedAt:System.currentTimeMillis());
         }catch(Exception ignored){/* Keep previous last-good snapshot on persistence failure. */}
@@ -35,6 +36,7 @@ public final class ForecastStore {
             if(prefs.hasLocation() && (Math.abs(f.latitude-prefs.lat())>0.005||Math.abs(f.longitude-prefs.lon())>0.005))return null;
             f.temperatureC=number(j,"temp");
             f.feelsLikeC=number(j,"feels");f.windKmh=number(j,"wind");f.humidityPct=number(j,"humidity");
+            f.nowcast=RainNowcastJson.decode(j.optJSONObject("nowcast"));
             f.weatherCode=j.optInt("code",-1);f.day=j.optBoolean("day",true);f.rainAgreement=j.optString("rainAgreement","");f.status=j.optString("status","");f.conditionText=j.optString("conditionText","");
             java.time.ZoneId zone;try{zone=java.time.ZoneId.of(f.timezone);}catch(Exception e){zone=java.time.ZoneId.systemDefault();}
             java.time.LocalDateTime now=java.time.LocalDateTime.now(zone).withMinute(0).withSecond(0).withNano(0);

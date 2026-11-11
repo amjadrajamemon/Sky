@@ -39,6 +39,8 @@ public final class AppPrefs {
     public void setRefreshMinutes(int min) { prefs.edit().putInt("refreshMinutes",Math.max(15,Math.min(180,min))).apply(); }
     public int appTheme() {return Math.max(0,Math.min(WidgetSettings.THEMES.length-1,prefs.getInt("appTheme",0)));}
     public void setAppTheme(int theme) {prefs.edit().putInt("appTheme",Math.max(0,Math.min(WidgetSettings.THEMES.length-1,theme))).apply();}
+    public boolean radarEnabled() { return prefs.getBoolean("radarEnabled",true); }
+    public void setRadarEnabled(boolean val) { prefs.edit().putBoolean("radarEnabled",val).apply(); }
     public boolean rainAlerts() { return prefs.getBoolean("rainAlerts",false); }
     public void setRainAlerts(boolean val) { prefs.edit().putBoolean("rainAlerts",val).apply(); }
     public boolean gps() { return prefs.getBoolean("gps",false); }

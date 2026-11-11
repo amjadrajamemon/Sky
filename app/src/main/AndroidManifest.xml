@@ -14,6 +14,8 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <activity android:name="com.skycast.pro.RadarPreviewActivity" android:exported="false"
+            android:label="Live radar &amp; rain nowcast"/>
         <activity android:name="com.skycast.pro.WidgetConfigActivity" android:exported="true"
             android:label="@string/widget_customize">
             <intent-filter><action android:name="android.appwidget.action.APPWIDGET_CONFIGURE"/></intent-filter>
