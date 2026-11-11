@@ -78,7 +78,8 @@ final class WidgetSettings {
     boolean alternateOrder() { return values.optBoolean("alternateOrder", false); }
     boolean reverseWeek() { return values.optBoolean("reverseWeek", false); }
     boolean showOption(String key, boolean fallback) { return values.optBoolean(key, fallback); }
-    int iconSize() { return range("iconSize", 85, 40, 150); }
+    int iconSize() { return range("iconSize", 100, 40, 170); }
+    int iconScale(String section) { return range("iconScale_"+section, 100, 50, 175); }
     int opacity() { return range("opacity", 96, 0, 100); }
     int units() { return range("units", 0, 0, 2); }
     int refreshMinutes() {

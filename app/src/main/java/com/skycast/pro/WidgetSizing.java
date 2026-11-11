@@ -11,6 +11,12 @@ public final class WidgetSizing {
         return Math.min(availableDays, Math.min(7, fittingDays));
     }
 
+    /** Visible icon dimension in dp; per-section and overall sliders are multiplicative. */
+    public static int iconDimension(int base, int overallPercent, int sectionPercent, int maximum) {
+        if(base<=0 || maximum<=0)return 0;
+        return Math.max(8,Math.min(maximum,Math.round(base*(overallPercent/100f)*(sectionPercent/100f))));
+    }
+
     public static String source(String name) {
         if (name.startsWith("Google WeatherNext")) return "Google WeatherNext 2";
         if (name.startsWith("MSN")) return "MSN · Foreca";

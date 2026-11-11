@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="0dp" android:layout_height="wrap_content"
+    android:layout_weight="1" android:orientation="vertical" android:gravity="center_horizontal"
+    android:paddingHorizontal="0dp">
+    <TextView android:id="@+id/hour_label" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:gravity="center" android:maxLines="1"
+        android:includeFontPadding="false" android:textSize="8sp" android:textStyle="bold" />
+    <ImageView android:id="@+id/hour_icon" android:layout_width="match_parent"
+        android:layout_height="27dp" android:scaleType="centerInside"
+        android:importantForAccessibility="no" />
+    <TextView android:id="@+id/hour_chance" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:gravity="center" android:maxLines="1"
+        android:includeFontPadding="false" android:textSize="9sp" android:textStyle="bold" />
+    <TextView android:id="@+id/hour_mm" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:gravity="center" android:maxLines="1"
+        android:includeFontPadding="false" android:textSize="8sp" />
+</LinearLayout>

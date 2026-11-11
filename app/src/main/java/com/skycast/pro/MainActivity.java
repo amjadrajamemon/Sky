@@ -56,6 +56,8 @@ public final class MainActivity extends Activity {
     private AppPrefs prefs;
     private LinearLayout root,currentHolder,forecastRow;
     private TextView status,locationLabel,temperatureLabel,conditionLabel,metricsLabel,rainHead,rainSub,sourceLabel,aqiLabel;
+    private Button intervalButton;
+    private LinearLayout todayHourRow;
     private WeatherSceneView scene;
     private TextView comparisonLabel, nowcastHead, nowcastDetail, nowcastTrust;
     private Button refreshButton;
@@ -69,11 +71,28 @@ public final class MainActivity extends Activity {
     }
     private int dp(float n){return Math.round(n*getResources().getDisplayMetrics().density);}
     private GradientDrawable bg(int color,int radius){
-        GradientDrawable gd=new GradientDrawable();gd.setColor(color);gd.setCornerRadius(dp(radius));return gd;
+        int theme=prefs==null?0:prefs.appTheme();
+        int radiusDp=new int[]{20,8,5,24,18,28,7,3,16,0}[theme];
+        int resolvedRadius=Math.max(0,Math.round((radius+radiusDp)/2f));
+        GradientDrawable gd=new GradientDrawable();
+        if(theme==0||theme==3||theme==5||theme==8){
+            int related=blend(color,TEAL,theme==8?.24f:.11f);
+            gd=new GradientDrawable(theme==8?GradientDrawable.Orientation.TR_BL:GradientDrawable.Orientation.TL_BR,
+                    new int[]{related,color});
+        } else gd.setColor(color);
+        gd.setCornerRadius(dp(resolvedRadius));
+        if(theme==7||theme==8||theme==9)gd.setStroke(dp(1),blend(color,TEAL,theme==8?.55f:.30f));
+        return gd;
     }
     private TextView label(String s,int sp,int color,boolean bold){
         TextView t=new TextView(this);t.setText(s);t.setTextSize(sp);t.setTextColor(color);
-        if(bold)t.setTypeface(Typeface.DEFAULT,Typeface.BOLD);t.setIncludeFontPadding(true);return t;
+        int theme=prefs==null?0:prefs.appTheme();
+        String[] faces={"sans-serif-medium","sans-serif-rounded","sans-serif-condensed","sans-serif-light",
+                "sans-serif","sans-serif-medium","serif","sans-serif-condensed","monospace","serif"};
+        t.setTypeface(Typeface.create(faces[theme],bold?Typeface.BOLD:Typeface.NORMAL));
+        if(theme==9)t.setLetterSpacing(.055f);
+        else if(theme==8)t.setLetterSpacing(.025f);
+        t.setIncludeFontPadding(false);return t;
     }
     private LinearLayout column(){LinearLayout c=new LinearLayout(this);c.setOrientation(LinearLayout.VERTICAL);return c;}
     private LinearLayout row(){LinearLayout c=new LinearLayout(this);c.setOrientation(LinearLayout.HORIZONTAL);c.setGravity(Gravity.CENTER_VERTICAL);return c;}
@@ -96,6 +115,8 @@ public final class MainActivity extends Activity {
         addButton(controls,button("≡ Source",this::sourceDialog));
         addButton(controls,button("⚙ Options",this::settingsDialog));
         status=label("Loading weather data…",11,MUTED,false);root.addView(status,cardParams(5));
+        intervalButton=button(refreshTitle(),this::refreshIntervalDialog);
+        root.addView(intervalButton,cardParams(6));
         root.addView(button("Customize widgets",()->WidgetConfigActivity.openPicker(this)),cardParams(6));
 
         currentHolder=row();currentHolder.setPadding(dp(16),dp(10),dp(10),dp(10));
@@ -105,8 +126,26 @@ public final class MainActivity extends Activity {
         conditionLabel=label("Weather information",16,MUTED,false);left.addView(conditionLabel);
         metricsLabel=label("",12,MUTED,false);LinearLayout.LayoutParams met=cardParams(7);left.addView(metricsLabel,met);
         scene=new WeatherSceneView(this);
+        scene.setArtStyle(new int[]{4,8,9,4,5,3,7,6,3,10}[prefs.appTheme()],TEAL,INK);
         int iconSize=getResources().getConfiguration().screenWidthDp<350?dp(108):dp(136);
         currentHolder.addView(scene,new LinearLayout.LayoutParams(iconSize,iconSize));
+        // Theme families alter the placement of the current-condition artwork.
+        int mode=prefs.appTheme();
+        if(mode==1||mode==4||mode==7||mode==9){
+            currentHolder.removeView(scene);
+            currentHolder.addView(scene,0,new LinearLayout.LayoutParams(dp(90),dp(90)));
+        }else if(mode==2||mode==5||mode==8){
+            currentHolder.setOrientation(LinearLayout.VERTICAL);
+            currentHolder.setGravity(Gravity.CENTER_HORIZONTAL);
+            left.setGravity(Gravity.CENTER_HORIZONTAL);
+            currentHolder.removeView(left);currentHolder.removeView(scene);
+            currentHolder.addView(scene,new LinearLayout.LayoutParams(dp(108),dp(108)));
+            currentHolder.addView(left,new LinearLayout.LayoutParams(-1,-2));
+            temperatureLabel.setGravity(Gravity.CENTER);
+            conditionLabel.setGravity(Gravity.CENTER);
+            metricsLabel.setGravity(Gravity.CENTER);
+        }
+
 
         LinearLayout rain=column();rain.setPadding(dp(15),dp(12),dp(15),dp(12));
         rain.setBackground(bg(0xff55374d,16));root.addView(rain,cardParams(11));
@@ -120,7 +159,12 @@ public final class MainActivity extends Activity {
         nowcastDetail=label("Radar motion · model · nearby airport observations",12,MUTED,false);now.addView(nowcastDetail,cardParams(4));
         nowcastTrust=label("Rain is an estimate. Check timestamps before relying on alerts.",11,MUTED,false);now.addView(nowcastTrust,cardParams(4));
         now.addView(button("Live radar preview & nowcast  ↗",()->startActivity(new Intent(this,RadarPreviewActivity.class))),cardParams(8));
-        root.addView(label("DAILY FORECAST",15,INK,true),cardParams(20));
+        root.addView(label("TODAY · HOURLY FORECAST",15,INK,true),cardParams(18));
+        HorizontalScrollView todayScroll=new HorizontalScrollView(this);
+        todayScroll.setHorizontalScrollBarEnabled(false);
+        todayHourRow=row();todayScroll.addView(todayHourRow,new ViewGroup.LayoutParams(-2,-2));
+        root.addView(todayScroll,cardParams(8));
+        root.addView(label("SEVEN-DAY FORECAST",15,INK,true),cardParams(20));
         HorizontalScrollView horizontal=new HorizontalScrollView(this);horizontal.setHorizontalScrollBarEnabled(false);
         forecastRow=row();horizontal.addView(forecastRow,new ViewGroup.LayoutParams(-2,-2));root.addView(horizontal,cardParams(9));
         root.addView(label("AIR QUALITY & CONDITIONS",15,INK,true),cardParams(20));
@@ -158,12 +202,15 @@ public final class MainActivity extends Activity {
     }
     private void render(Forecast f,String error){
         locationLabel.setText(prefs.city());
+        if(intervalButton!=null)intervalButton.setText(refreshTitle());
         if(f==null){
             status.setText(error.isEmpty()?"No saved weather data. Tap Refresh.":"Unable to refresh: "+error);
-            forecastRow.removeAllViews();return;
+            forecastRow.removeAllViews();if(todayHourRow!=null)todayHourRow.removeAllViews();return;
         }
         String updated=(f.stale?"STALE / CACHED · ":f.cached?"CACHED · ":"UPDATED · ")+f.retrievedAt;
-        status.setText(updated+(error.isEmpty()?"":" · "+error));
+        long age=f.fetchedAt>0?Math.max(0,System.currentTimeMillis()-f.fetchedAt):-1;
+        String ageNote=age>=0 ? " · data age "+Math.round(age/60000.0)+" min":"";
+        status.setText(updated+ageNote+(error.isEmpty()?"":" · "+error));
         temperatureLabel.setText(ForecastMath.temp(f.temperatureC,prefs.fahrenheit()));
         conditionLabel.setText(f.conditionText.isEmpty()?ForecastMath.condition(f.weatherCode,f.day):f.conditionText);
         scene.setCondition(f.weatherCode,f.day);
@@ -186,6 +233,27 @@ public final class MainActivity extends Activity {
         rainSub.setText(f.hours.isEmpty()?"Hourly timing unavailable · check daily rain chances"
             :rain.period() + (f.stale?" · Older forecast":f.rainAgreement.isEmpty()?"":" · "+f.rainAgreement));
         sourceLabel.setText("Using: "+f.source+"\n"+(f.status.isEmpty()?"Model-based forecast; check PMD for official warnings.":f.status));
+        todayHourRow.removeAllViews();
+        java.util.List<Forecast.Hour> today=TodayHours.remaining(f,java.time.Instant.now(),24);
+        if(today.isEmpty()){
+            todayHourRow.addView(label("Hourly forecast unavailable for the remaining hours of today",11,MUTED,false));
+        }
+        for(Forecast.Hour h:today){
+            LinearLayout cell=column();cell.setGravity(Gravity.CENTER_HORIZONTAL);
+            cell.setPadding(dp(8),dp(7),dp(8),dp(8));cell.setBackground(bg(CARD,11));
+            LinearLayout.LayoutParams lpHour=new LinearLayout.LayoutParams(dp(75),-2);lpHour.rightMargin=dp(6);
+            todayHourRow.addView(cell,lpHour);
+            TextView hourText=label(TodayHours.shortTime(h.time),12,INK,true);
+            hourText.setGravity(Gravity.CENTER);cell.addView(hourText);
+            ImageView hourlyIcon=new ImageView(this);
+            int hourlyStyle=new int[]{4,8,9,4,5,3,7,6,3,10}[prefs.appTheme()];
+            hourlyIcon.setImageBitmap(WeatherIconPainter.make(h.weatherCode,true,dp(37),hourlyStyle,TEAL,INK));
+            cell.addView(hourlyIcon,new LinearLayout.LayoutParams(dp(39),dp(39)));
+            TextView chance=label(RainBrief.percent(h.rainProbability),12,TEAL,true);
+            chance.setGravity(Gravity.CENTER);cell.addView(chance);
+            TextView amount=label(RainBrief.compactMm(h.rainMm),11,MUTED,false);
+            amount.setGravity(Gravity.CENTER);cell.addView(amount);
+        }
         forecastRow.removeAllViews();
         for(Forecast.Day d:f.days){
             LinearLayout cell=column();cell.setGravity(Gravity.CENTER_HORIZONTAL);cell.setPadding(dp(9),dp(9),dp(9),dp(11));cell.setBackground(bg(CARD,13));
@@ -221,6 +289,44 @@ public final class MainActivity extends Activity {
                 prefs.setModel(WeatherApi.MODEL_IDS[which]);d.dismiss();refresh(true);
             }).setNegativeButton("Cancel",null).show();
     }
+    private String refreshTitle(){
+        int min=prefs==null?60:prefs.refreshMinutes();
+        return "⟳ Refresh target: " + min + " min · tap to change";
+    }
+    private void refreshIntervalDialog(){
+        final int[] minutes={15,30,60,120,180};
+        final String[] labels={"15 min · rain priority", "30 min · frequent", "60 min · balanced",
+                "120 min · economical", "180 min · battery saving"};
+        int selected=2;
+        for(int i=0;i<minutes.length;i++)if(minutes[i]==prefs.refreshMinutes())selected=i;
+        new AlertDialog.Builder(this).setTitle("Forecast refresh target")
+            .setSingleChoiceItems(labels,selected,(dialog,which)->{
+                prefs.setRefreshMinutes(minutes[which]);
+                RefreshJob.schedule(this);
+                WeatherWidget.updateAll(this);
+                intervalButton.setText(refreshTitle());
+                dialog.dismiss();
+            }).setNeutralButton("Refresh now",(dialog,which)->refresh(true))
+            .setNegativeButton("Cancel",null)
+            .show();
+    }
+    private void updateThemePreview(ImageView target,int theme){
+        if(theme<0||theme>=WidgetSettings.THEMES.length)return;
+        int w=dp(320),h=dp(104),accent=ACCENTS[theme],ink=TEXTS[theme];
+        android.graphics.Bitmap preview=WidgetBackdropPainter.make(w,h,BACKGROUNDS[theme],accent,ink,theme);
+        android.graphics.Canvas canvas=new android.graphics.Canvas(preview);
+        android.graphics.Paint paint=new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        paint.setColor(ink);paint.setTypeface(Typeface.create(new String[]{"sans-serif-medium","sans-serif-rounded","sans-serif-condensed","sans-serif-light","sans-serif","monospace","serif","sans-serif-condensed","monospace","serif"}[theme],Typeface.BOLD));
+        paint.setTextSize(dp(19));canvas.drawText("24°",dp(14),dp(35),paint);
+        paint.setTextSize(dp(9));canvas.drawText("LIVE",dp(14),dp(13),paint);
+        paint.setColor(accent);paint.setTextSize(dp(11));
+        canvas.drawText("TODAY  3p   4p   5p   6p",dp(14),dp(62),paint);
+        canvas.drawText("7 DAYS  M   T   W   T   F   S   S",dp(14),dp(84),paint);
+        int iconStyle=new int[]{4,8,9,4,5,3,7,6,3,10}[theme];
+        android.graphics.Bitmap icon=WeatherIconPainter.make(61,true,dp(59),iconStyle,accent,ink);
+        canvas.drawBitmap(icon,w-dp(75),dp(7),paint);
+        target.setImageBitmap(preview);
+    }
     private void settingsDialog(){
         LinearLayout col=column();col.setPadding(dp(20),dp(15),dp(20),0);
         CheckBox f=new CheckBox(this);f.setText("Use Fahrenheit");f.setChecked(prefs.fahrenheit());col.addView(f);
@@ -231,15 +337,25 @@ public final class MainActivity extends Activity {
         Spinner theme=new Spinner(this);
         theme.setAdapter(new ArrayAdapter<String>(this,android.R.layout.simple_spinner_dropdown_item,WidgetSettings.THEMES));
         theme.setSelection(prefs.appTheme());col.addView(theme);
+        ImageView themePreview=new ImageView(this);
+        themePreview.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        col.addView(themePreview,new LinearLayout.LayoutParams(-1,dp(94)));
+        updateThemePreview(themePreview,prefs.appTheme());
+        theme.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener(){
+            @Override public void onItemSelected(android.widget.AdapterView<?> parent,View view,int item,long id){
+                updateThemePreview(themePreview,item);
+            }
+            @Override public void onNothingSelected(android.widget.AdapterView<?> parent){}
+        });
         TextView interval=label("Preferred background refresh (Android may delay)",12,INK,false);col.addView(interval);
-        Spinner schedule=new Spinner(this);String[] opts={"15 minutes (rain priority)","30 minutes","60 minutes (recommended)","180 minutes (battery saving)"};
+        Spinner schedule=new Spinner(this);String[] opts={"15 minutes (rain priority)","30 minutes","60 minutes (recommended)","120 minutes","180 minutes (battery saving)"};
         ArrayAdapter<String> adapter=new ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,opts);schedule.setAdapter(adapter);
-        schedule.setSelection(prefs.refreshMinutes()==15?0:prefs.refreshMinutes()==30?1:prefs.refreshMinutes()==180?3:2);col.addView(schedule);
+        schedule.setSelection(prefs.refreshMinutes()==15?0:prefs.refreshMinutes()==30?1:prefs.refreshMinutes()==120?3:prefs.refreshMinutes()==180?4:2);col.addView(schedule);
         new AlertDialog.Builder(this).setTitle("Forecast settings").setView(col)
             .setPositiveButton("Apply",(d,w)->{
                 int oldTheme=prefs.appTheme();prefs.setAppTheme(theme.getSelectedItemPosition());
                 prefs.setFahrenheit(f.isChecked());prefs.setCompare(compare.isChecked());prefs.setRainAlerts(alerts.isChecked());prefs.setRadarEnabled(radarOpt.isChecked());
-                prefs.setRefreshMinutes(schedule.getSelectedItemPosition()==0?15:schedule.getSelectedItemPosition()==1?30:schedule.getSelectedItemPosition()==3?180:60);
+                prefs.setRefreshMinutes(schedule.getSelectedItemPosition()==0?15:schedule.getSelectedItemPosition()==1?30:schedule.getSelectedItemPosition()==3?120:schedule.getSelectedItemPosition()==4?180:60);
                 RefreshJob.schedule(this);
                 if(alerts.isChecked() && Build.VERSION.SDK_INT>=33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED)
                     requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS},82);

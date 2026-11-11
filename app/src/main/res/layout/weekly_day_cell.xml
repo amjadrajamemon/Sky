@@ -6,23 +6,20 @@
     <TextView android:id="@+id/day_label" android:layout_width="match_parent"
         android:layout_height="wrap_content" android:gravity="center"
         android:includeFontPadding="false" android:maxLines="1"
-        android:ellipsize="end" android:textSize="8sp" android:textStyle="bold"
-        android:textColor="#D9EEFA" />
+        android:ellipsize="end" android:textSize="8sp" android:textStyle="bold" />
     <ImageView android:id="@+id/day_icon" android:layout_width="match_parent"
-        android:layout_height="13dp" android:scaleType="centerInside"
+        android:layout_height="29dp" android:scaleType="centerInside"
         android:importantForAccessibility="no" />
     <TextView android:id="@+id/day_temp" android:layout_width="match_parent"
         android:layout_height="wrap_content" android:gravity="center"
         android:includeFontPadding="false" android:maxLines="1"
-        android:ellipsize="end" android:textSize="8sp" android:textColor="#FFFFFF" />
+        android:ellipsize="end" android:textSize="8sp" />
     <TextView android:id="@+id/day_rain" android:layout_width="match_parent"
         android:layout_height="wrap_content" android:gravity="center"
         android:includeFontPadding="false" android:maxLines="1"
-        android:ellipsize="end" android:textSize="9sp" android:textStyle="bold"
-        android:textColor="#7EE5DF" />
+        android:ellipsize="end" android:textSize="9sp" android:textStyle="bold" />
     <TextView android:id="@+id/day_mm" android:layout_width="match_parent"
         android:layout_height="wrap_content" android:gravity="center"
         android:includeFontPadding="false" android:maxLines="1"
-        android:ellipsize="end" android:textSize="9sp" android:textStyle="bold"
-        android:textColor="#FFFFFF" />
+        android:ellipsize="end" android:textSize="9sp" android:textStyle="bold" />
 </LinearLayout>

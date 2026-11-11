@@ -1,4 +1,4 @@
-# SkyCast Pro Next — 2.0.0-beta.1 (Rain Nowcasting)
+# SkyCast Pro Next — 2.0.0-beta.2 (Hourly Widget + Visual Themes)
 
 A keyless Android weather app (Android 8+, `com.skycast.pro.next`). This build includes a **best-effort rain nowcasting layer** and an in-app live radar preview alongside the existing hourly / seven-day forecast and customizable widgets.
 
@@ -18,11 +18,13 @@ The 15-minute rain-priority periodic refresh **requests** are subject to Android
 
 ## Widget and visual customization retained
 
-The 4×2 widget has separate **Live**, **Today**, and **Seven Days** sections. Rain probability (%) and precipitation (mm) display independently, with unavailable data marked —. Rain timing gives radar-assisted wording only for valid, recent imagery, otherwise a labeled hourly model forecast. Other layouts remain selectable. All 10 app-wide themes, per-widget overrides, 10 icon treatments plus automatic theme-linked icons, text and rain color **HSV sliders**, text/element sizes, icon sizes, typefaces, density and individual widget location/provider settings remain present.
+The default 4×2 widget now uses **three distinct chronological rows**: Live at upper left; **Today = remaining actual hourly periods** (time, hour weather icon, rain %, mm); and **Seven Days = 7 daily columns** (weather icons, %, mm). At normal 4×2 heights, the two forecast rows take precedence over optional extra text, so the previously misleading "Today" daily summary no longer steals the hourly row. The main app offers a horizontal scroll through the remaining hours of today and a separate seven-day forecast. A sticky live preview in the widget editor updates as settings change, with an on-demand fetch of actual live weather, clear sample labels, and simulated width/height controls. The icon slider now changes RemoteViews dimensions on Android 12+, with an image-content scaling fallback on older devices and independent Live/Hour/Week controls. The app home screen shows a prominent forecast refresh target (15/30/60/120/180 minutes) and the age of fetched data; the widget editor retains separate per-widget refresh options. The target interval remains subject to Android JobScheduler delays and provider cache freshness.
+
+All ten themes now change app card geometry, typography, animated current-condition icon families, gradients/patterned widget surfaces, section treatments and related icon styles; they are **not only ten color presets**. The app Settings theme picker has a live graphical theme preview, while the widget editor has a pinned preview and HSV color sliders. Rain probability (%) and precipitation (mm) display independently, with unavailable data marked —. Rain timing gives radar-assisted wording only for valid, recent imagery, otherwise a labeled hourly model forecast. Other layouts remain selectable. All 10 app-wide themes, per-widget overrides, 10 icon treatments plus automatic theme-linked icons, text and rain color **HSV sliders**, text/element sizes, icon sizes, typefaces, density and individual widget location/provider settings remain present.
 
 ## Build and release
 
-GitHub Actions: [Actions → Build SkyCastPro Next](https://github.com/amjadrajamemon/Sky/actions). The workflow runs pure Java tests, JSON/provider parser tests, Android lint, Android SDK 35 debug APK compilation and signature verification, then uploads `SkyCastPro-Next-v2.0.0-beta.1-debug` as a downloadable artifact.
+GitHub Actions: [Actions → Build SkyCastPro Next](https://github.com/amjadrajamemon/Sky/actions). The workflow runs pure Java tests, JSON/provider parser tests, Android lint, Android SDK 35 debug APK compilation and signature verification, then uploads `SkyCastPro-Next-v2.0.0-beta.2-debug` as a downloadable artifact.
 
 Local build (JDK 17, Gradle 8.9, Android SDK 35):
 

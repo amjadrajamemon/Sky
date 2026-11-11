@@ -16,10 +16,23 @@ public final class WeatherSceneView extends View {
     private float phase;
     private int code=2;
     private boolean daytime=true;
+    private int artStyle=1,artAccent=0xff58deff,artInk=0xfff7fcff;
+    private android.graphics.Bitmap styledCache;
+    private int styledCacheSize;
+    public void setArtStyle(int style,int accent,int ink){
+        artStyle=style;artAccent=accent;artInk=ink;clearCache();invalidate();
+    }
     public WeatherSceneView(Context c){super(c);setContentDescription("Animated weather illustration");}
-    public void setCondition(int weatherCode,boolean isDay){code=weatherCode;daytime=isDay;invalidate();}
+    public void setCondition(int weatherCode,boolean isDay){
+        if(code!=weatherCode||daytime!=isDay)clearCache();
+        code=weatherCode;daytime=isDay;invalidate();
+    }
+    private void clearCache(){
+        if(styledCache!=null){styledCache.recycle();styledCache=null;}
+        styledCacheSize=0;
+    }
     @Override protected void onAttachedToWindow(){super.onAttachedToWindow();start();}
-    @Override protected void onDetachedFromWindow(){stop();super.onDetachedFromWindow();}
+    @Override protected void onDetachedFromWindow(){stop();clearCache();super.onDetachedFromWindow();}
     @Override protected void onVisibilityChanged(View changed,int visibility){
         super.onVisibilityChanged(changed,visibility);
         if(visibility==VISIBLE)start();else stop();
@@ -38,6 +51,18 @@ public final class WeatherSceneView extends View {
     }
     @Override protected void onDraw(Canvas canvas){
         super.onDraw(canvas);
+        if(artStyle!=1){
+            int size=Math.max(12,Math.min(getWidth(),getHeight()));
+            if(styledCache==null||styledCacheSize!=size){
+                clearCache();styledCache=WeatherIconPainter.make(code,daytime,size,artStyle,artAccent,artInk);
+                styledCacheSize=size;
+            }
+            float x=(getWidth()-size)/2f,y=(getHeight()-size)/2f;
+            float bounce=(float)Math.sin(phase*2*Math.PI)*Math.min(3,size*.012f);
+            Paint iconPaint=new Paint(Paint.ANTI_ALIAS_FLAG|Paint.FILTER_BITMAP_FLAG);
+            canvas.drawBitmap(styledCache,x,y+bounce,iconPaint);
+            return;
+        }
         canvas.save();float scale=Math.min(getWidth(),getHeight())/130f;
         canvas.translate((getWidth()-130*scale)/2f,(getHeight()-130*scale)/2f);canvas.scale(scale,scale);
         int gold=Color.rgb(255,213,103),white=Color.rgb(234,246,255),shade=Color.rgb(183,222,245),rain=Color.rgb(75,212,250);

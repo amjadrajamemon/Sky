@@ -43,6 +43,9 @@ public final class WidgetConfigActivity extends Activity {
     private FrameLayout preview;
     private TextView previewCaption;
     private Button location;
+    private Forecast previewForecast;
+    private Button livePreviewButton;
+    private LinearLayout.LayoutParams previewFrameParams;
     private int previewWidth;
     private int previewHeight;
 
@@ -100,23 +103,33 @@ public final class WidgetConfigActivity extends Activity {
         LinearLayout root = column();
         root.setBackgroundColor(0xff0b1727);
         root.setPadding(dp(14), dp(8), dp(14), dp(8));
-        root.addView(label(getString(R.string.widget_customize), 22));
+        root.addView(label(getString(R.string.widget_customize), 20));
+        // Pinned preview: changes remain visible while the controls scroll below.
+        int[] widgetSize = WeatherWidget.size(this, AppWidgetManager.getInstance(this).getAppWidgetOptions(widgetId), preset);
+        previewWidth = Math.max(150, Math.min(widgetSize[0], getResources().getConfiguration().screenWidthDp - 32));
+        previewHeight = Math.max(95, Math.min(190, widgetSize[1]));
+        previewCaption = label("LIVE PREVIEW · loading", 12);
+        root.addView(previewCaption);
+        preview = new FrameLayout(this);
+        previewFrameParams = new LinearLayout.LayoutParams(dp(previewWidth), dp(previewHeight));
+        previewFrameParams.gravity = android.view.Gravity.CENTER_HORIZONTAL;
+        root.addView(preview, previewFrameParams);
+        livePreviewButton = button("↻ Fetch actual weather for preview", this::fetchPreviewWeather);
+        root.addView(livePreviewButton);
         ScrollView scroll = new ScrollView(this);
         form = column();
         form.setPadding(0, dp(4), 0, dp(10));
         scroll.addView(form);
         root.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
 
-        int[] size = WeatherWidget.size(this, AppWidgetManager.getInstance(this).getAppWidgetOptions(widgetId), preset);
-        previewWidth = Math.max(130, Math.min(size[0], getResources().getConfiguration().screenWidthDp - 36));
-        previewHeight = Math.max(90, Math.min(320, size[1]));
-        previewCaption = label("Preview", 14);
-        form.addView(previewCaption);
-        preview = new FrameLayout(this);
-        LinearLayout.LayoutParams frame = new LinearLayout.LayoutParams(dp(previewWidth), dp(previewHeight));
-        frame.gravity = android.view.Gravity.CENTER_HORIZONTAL;
-        form.addView(preview, frame);
-
+        heading("Preview size · 4 × 2 simulation");
+        slider("Preview width", 160, 420, Math.max(160,Math.min(420,previewWidth)), "dp", value -> {
+            previewWidth=Math.min(value,getResources().getConfiguration().screenWidthDp-32);
+            resizePreview();
+        });
+        slider("Preview height", 95, 220, Math.max(95,Math.min(220,previewHeight)), "dp", value -> {
+            previewHeight=value;resizePreview();
+        });
         heading("Layout");
         select("Presentation", WidgetSettings.LAYOUTS, settings.layout(), value -> change("layout", value));
         slider("Forecast days", 1, 7, settings.days(), "", value -> change("days", value));
@@ -133,7 +146,8 @@ public final class WidgetConfigActivity extends Activity {
         check("Current temperature", "temperature");
         check("Current condition", "condition");
         check("Weather icons", "icons");
-        check("Rain headline", "rain");
+        check("Rain probability and mm", "rain");
+        check("Extra rain headline on taller widgets", "rainHeadline");
         check("Rain chance (%)", "chance");
         check("Rain amount (mm)", "amount");
         check("Hourly rain timing", "timing");
@@ -149,7 +163,10 @@ public final class WidgetConfigActivity extends Activity {
         select("Typeface", WidgetSettings.FONTS, settings.font(), value -> change("font", value));
         slider("Background opacity", 0, 100, settings.opacity(), "%", value -> change("opacity", value));
         slider("Overall text scale", 70, 150, settings.textSize(), "%", value -> change("textSize", value));
-        slider("Weather icon scale", 40, 150, settings.iconSize(), "%", value -> change("iconSize", value));
+        slider("All weather icons", 40, 170, settings.iconSize(), "%", value -> change("iconSize", value));
+        slider("Live icon size", 50, 175, settings.iconScale("live"), "%", value -> change("iconScale_live", value));
+        slider("Hourly icons", 50, 175, settings.iconScale("hour"), "%", value -> change("iconScale_hour", value));
+        slider("Seven-day icons", 50, 175, settings.iconScale("week"), "%", value -> change("iconScale_week", value));
         colorSlider("Background", "background", settings.background());
         colorSlider("Primary text", "foreground", settings.foreground());
         colorSlider("Accent", "accent", settings.accent());
@@ -163,7 +180,11 @@ public final class WidgetConfigActivity extends Activity {
         sizeSlider("Live tag", "liveLabel", 9, 7, 22);
         sizeSlider("Live temperature", "temperature", 25, 14, 40);
         sizeSlider("Conditions", "condition", 10, 7, 24);
-        sizeSlider("Today's rain", "todayRain", 12, 8, 32);
+        sizeSlider("Today hourly label", "todayLabel", 8, 7, 18);
+        sizeSlider("Hourly time", "hourName", 8, 7, 17);
+        sizeSlider("Hourly rain chance", "hourChance", 8, 7, 17);
+        sizeSlider("Hourly rainfall", "hourAmount", 8, 7, 17);
+        sizeSlider("Extra rain headline", "todayRain", 12, 8, 32);
         sizeSlider("Rain timing", "rainTiming", 9, 7, 24);
         sizeSlider("Week title", "weekLabel", 8, 7, 20);
         sizeSlider("Day names", "dayName", 8, 7, 20);
@@ -201,6 +222,7 @@ public final class WidgetConfigActivity extends Activity {
 
     private void change(String key, Object value) {
         if ("theme".equals(key) && ((Number)value).intValue()!=settings.theme()) settings.resetThemeOverrides();
+        if ("provider".equals(key)) previewForecast=null;
         settings.set(key, value);
         if (preview != null) {
             preview.removeCallbacks(updatePreview);
@@ -262,6 +284,32 @@ public final class WidgetConfigActivity extends Activity {
         });
     }
 
+    private void resizePreview() {
+        if(preview==null)return;
+        previewFrameParams.width=dp(previewWidth);
+        previewFrameParams.height=dp(previewHeight);
+        preview.setLayoutParams(previewFrameParams);
+        refreshPreview();
+    }
+
+    private void fetchPreviewWeather() {
+        if(livePreviewButton==null || !livePreviewButton.isEnabled())return;
+        livePreviewButton.setEnabled(false);
+        livePreviewButton.setText("Fetching live forecast…");
+        AppPrefs scope=settings.forecastPrefs(this,widgetId);
+        WeatherCoordinator.refreshWidget(this,scope,true,(forecast,error)->{
+            if(isFinishing()||isDestroyed())return;
+            livePreviewButton.setEnabled(true);
+            livePreviewButton.setText("↻ Fetch actual weather for preview");
+            if(forecast==null){
+                Toast.makeText(this,"Live data unavailable: "+error,Toast.LENGTH_LONG).show();
+            }else{
+                previewForecast=forecast;
+                refreshPreview();
+            }
+        });
+    }
+
     private void refreshPreview() {
         if (preview == null || isFinishing()) return;
         AppPrefs app = new AppPrefs(this);
@@ -276,7 +324,9 @@ public final class WidgetConfigActivity extends Activity {
             if (Double.compare(cache.lat(), lat) == 0 && Double.compare(cache.lon(), lon) == 0
                     && cache.model().equals(provider)) f = new ForecastStore(cache).load();
         }
-        previewCaption.setText(f == null ? "Preview · sample weather" : "Preview");
+        if (previewForecast != null) f=previewForecast;
+        previewCaption.setText(previewForecast != null ? "LIVE PREVIEW · fetched weather" :
+                f == null ? "LIVE PREVIEW · illustrative example" : "LIVE PREVIEW · saved forecast");
         if (f == null) f = sample(city);
         try {
             String title = "Choose your city".equals(city) ? f.city : city;
@@ -286,7 +336,10 @@ public final class WidgetConfigActivity extends Activity {
             preview.addView(views.apply(this, preview));
         } catch (RuntimeException e) {
             preview.removeAllViews();
-            preview.addView(label("Preview unavailable", 13));
+            TextView info=label("Preview could not render: " + e.getClass().getSimpleName(), 12);
+            info.setTextColor(0xffffac9d);
+            preview.addView(info);
+            android.util.Log.e("SkyCastPreview", "Widget preview render error",e);
         }
     }
 
@@ -313,6 +366,7 @@ public final class WidgetConfigActivity extends Activity {
             Forecast.Hour h = new Forecast.Hour();
             h.time = java.time.LocalDateTime.now().withMinute(0).withSecond(0).withNano(0)
                     .plusHours(i).toString();
+            h.weatherCode = (i >= 2 && i <= 5) ? 61 : i % 3 == 0 ? 2 : 3;
             h.rainProbability = (i >= 2 && i <= 5) ? 77 : 12;
             h.rainMm = (i >= 2 && i <= 5) ? 2.3 : 0;
             f.hours.add(h);
